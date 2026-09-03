@@ -133,14 +133,14 @@ export function Dashboard({ data, update, setTab, openModal, setAiOpen }) {
           boxShadow: 'var(--shadow-md)',
         }}
       >
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="welcome-banner-header">
+          <div className="welcome-title-wrap" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 24 }}>🚀</span>
             <div className="display" style={{ fontSize: 24, fontWeight: 700 }}>
               Good {timeOfDay()}, {data.settings?.name || 'Yassin'}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 }}>
+          <div className="welcome-chips" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 }}>
             <span className="chip" style={{ background: 'var(--blue-dim)', color: '#93C5FD', fontWeight: 600 }}>
               🩺 Pre-Med '27
             </span>
@@ -156,7 +156,7 @@ export function Dashboard({ data, update, setTab, openModal, setAiOpen }) {
         </div>
 
         {/* View Switcher & Quick Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div className="welcome-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <div className="view-mode-toggle">
             <button
               className={`view-mode-btn ${dashboardView === 'bento' ? 'active' : ''}`}

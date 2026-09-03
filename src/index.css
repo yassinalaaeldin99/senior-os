@@ -714,11 +714,48 @@ button {
     overflow-x: auto !important;
   }
 
-  /* Dashboard specific mobile spacing */
+  /* Dashboard specific mobile spacing & centering */
   .welcome-banner {
-    padding: 16px 14px !important;
+    padding: 18px 16px !important;
     border-radius: 16px !important;
-    gap: 12px !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 14px !important;
+  }
+
+  .welcome-banner-header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .welcome-title-wrap {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .welcome-chips {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    margin-top: 8px !important;
+  }
+
+  .welcome-actions {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
   }
 
   .dashboard-card {
