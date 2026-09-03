@@ -120,10 +120,9 @@ export function Dashboard({ data, update, setTab, openModal, setAiOpen }) {
     <div className="fade-in">
       {/* Top Welcome Banner */}
       <div
-        className="card"
+        className="card welcome-banner"
         style={{
-          padding: '24px 28px',
-          marginBottom: 24,
+          marginBottom: 20,
           background: 'linear-gradient(135deg, rgba(18,26,42,0.92), rgba(24,34,54,0.98))',
           border: '1px solid var(--border-bright)',
           display: 'flex',
@@ -137,20 +136,27 @@ export function Dashboard({ data, update, setTab, openModal, setAiOpen }) {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 24 }}>🚀</span>
-            <div className="display" style={{ fontSize: 26, fontWeight: 700 }}>
+            <div className="display" style={{ fontSize: 24, fontWeight: 700 }}>
               Good {timeOfDay()}, {data.settings?.name || 'Yassin'}
             </div>
           </div>
-          <div style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 4 }}>
-            Senior Year Mission: <b style={{ color: 'var(--text)' }}>Class of 2027 Pre-Med Track</b> · Active Month: <b style={{ color: 'var(--blue-light)' }}>{curMonth}</b>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 }}>
+            <span className="chip" style={{ background: 'var(--blue-dim)', color: '#93C5FD', fontWeight: 600 }}>
+              🩺 Pre-Med '27
+            </span>
+            <span className="chip" style={{ background: 'var(--bg-elev)', color: 'var(--text-dim)', border: '1px solid var(--border-soft)' }}>
+              🗓️ {curMonth} Roadmap
+            </span>
             {nextMoeEvent && (
-              <span> · Next Break: <b style={{ color: 'var(--amber-light)' }}>{nextMoeEvent.eventEn} (in {nextMoeEvent.days}d)</b></span>
+              <span className="chip" style={{ background: 'var(--amber-dim)', color: 'var(--amber-light)', fontWeight: 600 }}>
+                🏖️ Break in {nextMoeEvent.days}d
+              </span>
             )}
           </div>
         </div>
 
         {/* View Switcher & Quick Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <div className="view-mode-toggle">
             <button
               className={`view-mode-btn ${dashboardView === 'bento' ? 'active' : ''}`}
@@ -179,75 +185,81 @@ export function Dashboard({ data, update, setTab, openModal, setAiOpen }) {
       {/* 5 Core Metric Cards */}
       <div className="metrics-grid">
         <div
-          className="card card-interactive"
+          className="card card-interactive metric-card"
           onClick={() => setTab('grades')}
-          style={{ padding: '16px 18px', cursor: 'pointer' }}
+          style={{ cursor: 'pointer' }}
         >
           <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px' }}>
             Annual GPA
           </div>
-          <div className="display" style={{ fontSize: 28, fontWeight: 700, color: 'var(--blue)', margin: '4px 0' }}>
+          <div className="display metric-card-num" style={{ fontSize: 26, fontWeight: 700, color: 'var(--blue)', margin: '4px 0' }}>
             {avg != null ? `${avg.toFixed(1)}%` : '—'}
           </div>
           <div style={{ fontSize: 11, color: avg >= 95 ? 'var(--green)' : 'var(--amber-light)', fontWeight: 600 }}>
-            {avg >= 95 ? '✓ Medical Target Met' : 'Aiming for 95%+ Target'}
+            {avg >= 95 ? '✓ Medical Met' : 'Aiming 95%+'}
           </div>
         </div>
 
         <div
-          className="card card-interactive"
+          className="card card-interactive metric-card"
           onClick={() => setTab('homework')}
-          style={{ padding: '16px 18px', cursor: 'pointer' }}
+          style={{ cursor: 'pointer' }}
         >
           <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px' }}>
             Due This Week
           </div>
-          <div className="display" style={{ fontSize: 28, fontWeight: 700, color: dueThisWeek > 0 ? 'var(--amber-light)' : 'var(--text)', margin: '4px 0' }}>
+          <div className="display metric-card-num" style={{ fontSize: 26, fontWeight: 700, color: dueThisWeek > 0 ? 'var(--amber-light)' : 'var(--text)', margin: '4px 0' }}>
             {dueThisWeek}
           </div>
           <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>assignments pending</div>
         </div>
 
         <div
-          className="card card-interactive"
+          className="card card-interactive metric-card"
           onClick={() => setTab('exams')}
-          style={{ padding: '16px 18px', cursor: 'pointer' }}
+          style={{ cursor: 'pointer' }}
         >
           <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px' }}>
             Upcoming Exams
           </div>
-          <div className="display" style={{ fontSize: 28, fontWeight: 700, color: upcomingExams > 0 ? 'var(--red-light)' : 'var(--text)', margin: '4px 0' }}>
+          <div className="display metric-card-num" style={{ fontSize: 26, fontWeight: 700, color: upcomingExams > 0 ? 'var(--red-light)' : 'var(--text)', margin: '4px 0' }}>
             {upcomingExams}
           </div>
           <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>scheduled assessments</div>
         </div>
 
         <div
-          className="card card-interactive"
+          className="card card-interactive metric-card"
           onClick={() => setTab('study')}
-          style={{ padding: '16px 18px', cursor: 'pointer' }}
+          style={{ cursor: 'pointer' }}
         >
           <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px' }}>
             Study This Week
           </div>
-          <div className="display" style={{ fontSize: 28, fontWeight: 700, color: 'var(--green)', margin: '4px 0' }}>
+          <div className="display metric-card-num" style={{ fontSize: 26, fontWeight: 700, color: 'var(--green)', margin: '4px 0' }}>
             {fmtMins(studyMinsWeek)}
           </div>
           <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>active study time</div>
         </div>
 
+        {/* Card 5: Full Width Ribbon on Mobile */}
         <div
-          className="card card-interactive"
+          className="card card-interactive metric-card"
           onClick={() => setTab('timeline')}
-          style={{ padding: '16px 18px', cursor: 'pointer' }}
+          style={{ cursor: 'pointer' }}
         >
-          <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px' }}>
-            Graduation (Jul 2)
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px' }}>
+                Graduation (Jul 2, 2027)
+              </div>
+              <div className="display metric-card-num" style={{ fontSize: 26, fontWeight: 700, color: 'var(--violet-light)', margin: '3px 0' }}>
+                {daysToGrad} Days Left
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>Official UAE MOE Date</div>
+            </div>
+            <div style={{ fontSize: 32, paddingRight: 6 }}>🎓</div>
           </div>
-          <div className="display" style={{ fontSize: 28, fontWeight: 700, color: 'var(--violet-light)', margin: '4px 0' }}>
-            {daysToGrad}d
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>UAE MOE Official Date</div>
         </div>
       </div>
 
@@ -255,7 +267,7 @@ export function Dashboard({ data, update, setTab, openModal, setAiOpen }) {
       {dashboardView === 'bento' && (
         <div className="bento-grid">
           {/* Left Column: Smart Priority Queue */}
-          <div className="card" style={{ padding: 20 }}>
+          <div className="card dashboard-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700 }}>⚡ Smart Priority Queue</div>
@@ -378,9 +390,9 @@ export function Dashboard({ data, update, setTab, openModal, setAiOpen }) {
           </div>
 
           {/* Right Column: Month Mission & Pre-Med Track */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* Senior Year Mission Box */}
-            <div className="card" style={{ padding: 20 }}>
+            <div className="card dashboard-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <div style={{ fontSize: 15, fontWeight: 700 }}>
                   🎯 {curMonth} Mission: {monthInfo.title}
@@ -401,9 +413,9 @@ export function Dashboard({ data, update, setTab, openModal, setAiOpen }) {
 
             {/* Pre-Med & IELTS Target Card */}
             <div
-              className="card card-interactive"
+              className="card card-interactive dashboard-card"
               onClick={() => setTab('ielts')}
-              style={{ padding: 20, cursor: 'pointer' }}
+              style={{ cursor: 'pointer' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -425,7 +437,7 @@ export function Dashboard({ data, update, setTab, openModal, setAiOpen }) {
             </div>
 
             {/* Quick Action Dock */}
-            <div className="card" style={{ padding: 20 }}>
+            <div className="card dashboard-card">
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>
                 ⚡ Quick Action Launcher
               </div>
@@ -466,7 +478,7 @@ export function Dashboard({ data, update, setTab, openModal, setAiOpen }) {
 
       {/* DASHBOARD VIEW: FOCUS STREAM */}
       {dashboardView === 'focus' && (
-        <div className="card" style={{ padding: 24, maxWidth: 760, margin: '0 auto' }}>
+        <div className="card dashboard-card" style={{ maxWidth: 760, margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
             <div>
               <div style={{ fontSize: 18, fontWeight: 700 }}>🎯 Deep Work Focus Queue</div>
