@@ -99,7 +99,7 @@ export function CalendarPage({ data }) {
 
   return (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div className="tab-header">
         <div>
           <div className="display" style={{ fontSize: 24, fontWeight: 700 }}>
             Academic Calendar
@@ -109,25 +109,27 @@ export function CalendarPage({ data }) {
           </div>
         </div>
 
-        <div className="view-mode-toggle">
-          <button
-            className={`view-mode-btn ${viewMode === 'month' ? 'active' : ''}`}
-            onClick={() => setViewMode('month')}
-          >
-            <span>📅</span> Month Grid
-          </button>
-          <button
-            className={`view-mode-btn ${viewMode === 'agenda' ? 'active' : ''}`}
-            onClick={() => setViewMode('agenda')}
-          >
-            <span>📜</span> Agenda View
-          </button>
+        <div className="tab-header-actions">
+          <div className="view-mode-toggle">
+            <button
+              className={`view-mode-btn ${viewMode === 'month' ? 'active' : ''}`}
+              onClick={() => setViewMode('month')}
+            >
+              <span>📅</span> Month Grid
+            </button>
+            <button
+              className={`view-mode-btn ${viewMode === 'agenda' ? 'active' : ''}`}
+              onClick={() => setViewMode('agenda')}
+            >
+              <span>📜</span> Agenda View
+            </button>
+          </div>
         </div>
       </div>
 
       {/* VIEW 1: MONTH GRID */}
       {viewMode === 'month' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
+        <div className="calendar-split">
           <div className="card" style={{ padding: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <button

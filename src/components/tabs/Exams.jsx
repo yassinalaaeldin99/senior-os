@@ -33,7 +33,7 @@ export function Exams({ data, update, openModal }) {
 
   return (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div className="tab-header">
         <div>
           <div className="display" style={{ fontSize: 24, fontWeight: 700 }}>
             Exams & Assessments
@@ -43,7 +43,7 @@ export function Exams({ data, update, openModal }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="tab-header-actions">
           <div className="view-mode-toggle">
             <button
               className={`view-mode-btn ${viewMode === 'cards' ? 'active' : ''}`}
@@ -102,19 +102,25 @@ export function Exams({ data, update, openModal }) {
 
         <div>
           <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600 }}>
-            Next Challenge
+            Immediate Next Exam
           </div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--amber-light)', marginTop: 2 }}>
-            {sorted.length > 0 ? `${sorted[0].name} (${fmtDate(sorted[0].date)})` : 'None scheduled'}
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+            {sorted.find((e) => daysBetween(today, e.date) >= 0)
+              ? `${sorted.find((e) => daysBetween(today, e.date) >= 0).name} (${fmtDate(
+                  sorted.find((e) => daysBetween(today, e.date) >= 0).date
+                )})`
+              : 'None scheduled'}
           </div>
         </div>
       </div>
 
-      {sorted.length === 0 && <EmptyState icon="📝" text="No exams tracked yet." />}
+      {data.exams.length === 0 && (
+        <EmptyState icon="📝" text="No exams scheduled. Add your first exam or quiz above!" />
+      )}
 
-      {/* VIEW 1: PREP CARDS */}
+      {/* VIEW 1: CARDS / PREP VIEW */}
       {viewMode === 'cards' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 18 }}>
+        <div className="cards-grid">
           {sorted.map((e) => {
             const s = subjInfo(e.subject);
             const days = daysBetween(today, e.date);

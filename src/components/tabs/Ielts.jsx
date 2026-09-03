@@ -31,7 +31,7 @@ export function Ielts({ data, update, openModal }) {
 
   return (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div className="tab-header">
         <div>
           <div className="display" style={{ fontSize: 24, fontWeight: 700 }}>
             IELTS Academic Preparation
@@ -41,7 +41,7 @@ export function Ielts({ data, update, openModal }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="tab-header-actions">
           <div className="view-mode-toggle">
             <button
               className={`view-mode-btn ${viewMode === 'overview' ? 'active' : ''}`}
@@ -121,7 +121,7 @@ export function Ielts({ data, update, openModal }) {
 
       {/* VIEW 1: OVERVIEW & SKILLS */}
       {viewMode === 'overview' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 20 }}>
+        <div className="cards-grid">
           {/* Skill Breakdown */}
           <div className="card" style={{ padding: 20 }}>
             <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 14 }}>

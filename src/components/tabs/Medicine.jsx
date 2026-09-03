@@ -27,7 +27,7 @@ export function Medicine({ data, update, openModal }) {
 
   return (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div className="tab-header">
         <div>
           <div className="display" style={{ fontSize: 24, fontWeight: 700 }}>
             Medicine Career & Study Abroad
@@ -37,19 +37,21 @@ export function Medicine({ data, update, openModal }) {
           </div>
         </div>
 
-        <div className="view-mode-toggle">
-          <button
-            className={`view-mode-btn ${viewMode === 'cards' ? 'active' : ''}`}
-            onClick={() => setViewMode('cards')}
-          >
-            <span>🗂️</span> Cards View
-          </button>
-          <button
-            className={`view-mode-btn ${viewMode === 'table' ? 'active' : ''}`}
-            onClick={() => setViewMode('table')}
-          >
-            <span>📋</span> Comparison Matrix
-          </button>
+        <div className="tab-header-actions">
+          <div className="view-mode-toggle">
+            <button
+              className={`view-mode-btn ${viewMode === 'cards' ? 'active' : ''}`}
+              onClick={() => setViewMode('cards')}
+            >
+              <span>🗂️</span> Cards View
+            </button>
+            <button
+              className={`view-mode-btn ${viewMode === 'table' ? 'active' : ''}`}
+              onClick={() => setViewMode('table')}
+            >
+              <span>📋</span> Comparison Matrix
+            </button>
+          </div>
         </div>
       </div>
 
@@ -109,7 +111,7 @@ export function Medicine({ data, update, openModal }) {
 
       {/* VIEW 1: COUNTRY CARDS */}
       {viewMode === 'cards' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, marginBottom: 28 }}>
+        <div className="cards-grid" style={{ marginBottom: 28 }}>
           {m.countries.length === 0 && <EmptyState icon="🌍" text="No countries added yet." />}
           {m.countries.map((c) => {
             const isTarget = m.decidedCountry?.id === c.id;

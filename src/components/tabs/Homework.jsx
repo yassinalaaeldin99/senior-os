@@ -43,7 +43,7 @@ export function Homework({ data, update, openModal }) {
 
   return (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div className="tab-header">
         <div>
           <div className="display" style={{ fontSize: 24, fontWeight: 700 }}>
             Homework & Tasks
@@ -53,7 +53,7 @@ export function Homework({ data, update, openModal }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="tab-header-actions">
           {/* View Mode Toggle */}
           <div className="view-mode-toggle">
             <button
@@ -153,7 +153,7 @@ export function Homework({ data, update, openModal }) {
 
       {/* VIEW 1: CARDS / GRID VIEW */}
       {viewMode === 'cards' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
+        <div className="cards-grid">
           {list.map((h) => {
             const days = daysBetween(today, h.dueDate);
             const s = subjInfo(h.subject);

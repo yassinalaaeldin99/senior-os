@@ -177,14 +177,7 @@ export function Dashboard({ data, update, setTab, openModal, setAiOpen }) {
       </div>
 
       {/* 5 Core Metric Cards */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: 16,
-          marginBottom: 24,
-        }}
-      >
+      <div className="metrics-grid">
         <div
           className="card card-interactive"
           onClick={() => setTab('grades')}
@@ -260,7 +253,7 @@ export function Dashboard({ data, update, setTab, openModal, setAiOpen }) {
 
       {/* DASHBOARD VIEW: BENTO COMMAND CENTER */}
       {dashboardView === 'bento' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 24 }}>
+        <div className="bento-grid">
           {/* Left Column: Smart Priority Queue */}
           <div className="card" style={{ padding: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>

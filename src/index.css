@@ -32,7 +32,7 @@
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 16px 36px -6px rgba(0, 0, 0, 0.65);
-  --glass: rgba(13, 19, 31, 0.88);
+  --glass: rgba(13, 19, 31, 0.92);
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -65,7 +65,7 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.08);
-  --glass: rgba(255, 255, 255, 0.88);
+  --glass: rgba(255, 255, 255, 0.92);
 }
 
 * {
@@ -186,13 +186,19 @@ html, body {
 }
 
 /* Form inputs */
+label > input:not([type="checkbox"]):not([type="radio"]),
+label > select,
+label > textarea {
+  width: 100%;
+}
+
 input, textarea, select {
   background: var(--bg-elev);
   border: 1px solid var(--border);
   color: var(--text);
   border-radius: 10px;
   padding: 9px 13px;
-  font-size: 13px;
+  font-size: 13.5px;
   font-family: inherit;
   outline: none;
   transition: all 0.15s ease;
@@ -228,6 +234,7 @@ button {
   gap: 8px;
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
   user-select: none;
+  min-height: 38px;
 }
 
 .btn-primary:hover {
@@ -253,6 +260,7 @@ button {
   align-items: center;
   gap: 7px;
   user-select: none;
+  min-height: 36px;
 }
 
 .btn-ghost:hover {
@@ -300,7 +308,7 @@ button {
   transition: all 0.15s ease;
   user-select: none;
   position: relative;
-  min-height: 40px;
+  min-height: 42px;
 }
 
 .nav-item:hover {
@@ -339,7 +347,6 @@ button {
   border-radius: 10px;
   gap: 2px;
   max-width: 100%;
-  overflow-x: auto;
 }
 
 .view-mode-btn {
@@ -397,6 +404,15 @@ button {
   gap: 5px;
 }
 
+/* Data Table Container with Smooth Touch Scroll */
+.data-table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+}
+
 /* Tables */
 .data-table {
   width: 100%;
@@ -417,6 +433,7 @@ button {
   position: sticky;
   top: 0;
   z-index: 5;
+  white-space: nowrap;
 }
 
 .data-table td {
@@ -463,7 +480,7 @@ button {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(5, 8, 15, 0.75);
+  background: rgba(5, 8, 15, 0.78);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
@@ -487,17 +504,77 @@ button {
   z-index: 40;
 }
 
+/* Status dots */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.green {
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+}
+
+.status-dot.blue {
+  background: var(--blue);
+  box-shadow: 0 0 8px var(--blue);
+}
+
+/* Responsive Grid & Layout Containers */
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.tab-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+}
+
+.calendar-split {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 16px;
+}
+
 /* ===================================================
    MOBILE & TABLET RESPONSIVE RULES (PHONE SUPPORT)
    =================================================== */
 
 @media (max-width: 768px) {
-  /* Hide desktop sidebar */
+  /* Hide desktop sidebar & desktop-only elements */
   .desktop-sidebar {
     display: none !important;
   }
 
-  /* Compact content container */
+  /* Compact content container with safe area insets */
   .main-content {
     padding: 14px 14px calc(76px + var(--safe-bottom)) !important;
   }
@@ -507,9 +584,47 @@ button {
     padding: calc(10px + var(--safe-top)) 14px 10px !important;
   }
 
+  /* Tab Header stacks cleanly on phone */
+  .tab-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .tab-header-actions {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .view-mode-toggle {
+    overflow-x: auto !important;
+  }
+
+  /* 2-column metrics grid on phone (5th card spans 2 columns) */
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .metrics-grid > *:last-child {
+    grid-column: span 2;
+  }
+
+  /* Bento grid stacks into clean single column on phone */
+  .bento-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* Calendar split stacks on phone */
+  .calendar-split {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
   /* Quick add floating button on mobile - placed right above bottom navigation */
   .quick-add-btn-wrap {
-    right: 18px !important;
+    right: 16px !important;
     bottom: calc(72px + var(--safe-bottom)) !important;
   }
 
@@ -534,7 +649,7 @@ button {
     max-width: 100% !important;
     border-radius: 20px 20px 0 0 !important;
     max-height: 90vh !important;
-    padding-bottom: calc(20px + var(--safe-bottom)) !important;
+    padding-bottom: calc(24px + var(--safe-bottom)) !important;
   }
 
   .modal-sheet {
@@ -546,15 +661,9 @@ button {
     padding-bottom: var(--safe-bottom) !important;
   }
 
-  /* Bento grid stacks on phone */
-  .bento-split {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Data tables support touch scroll */
-  .data-table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  /* Mobile input sizing to prevent iOS zoom */
+  input, select, textarea {
+    font-size: 15px !important;
   }
 }
 

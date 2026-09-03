@@ -35,7 +35,7 @@ export function Timeline({ data, update }) {
 
   return (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div className="tab-header">
         <div>
           <div className="display" style={{ fontSize: 24, fontWeight: 700 }}>
             Academic Year Plan & Timeline
@@ -45,25 +45,27 @@ export function Timeline({ data, update }) {
           </div>
         </div>
 
-        <div className="view-mode-toggle">
-          <button
-            className={`view-mode-btn ${viewMode === 'moe' ? 'active' : ''}`}
-            onClick={() => setViewMode('moe')}
-          >
-            <span>🇦🇪</span> UAE Official Plan
-          </button>
-          <button
-            className={`view-mode-btn ${viewMode === 'grid' ? 'active' : ''}`}
-            onClick={() => setViewMode('grid')}
-          >
-            <span>🗓️</span> Month Roadmap
-          </button>
-          <button
-            className={`view-mode-btn ${viewMode === 'milestones' ? 'active' : ''}`}
-            onClick={() => setViewMode('milestones')}
-          >
-            <span>🚩</span> Personal Milestones
-          </button>
+        <div className="tab-header-actions">
+          <div className="view-mode-toggle">
+            <button
+              className={`view-mode-btn ${viewMode === 'moe' ? 'active' : ''}`}
+              onClick={() => setViewMode('moe')}
+            >
+              <span>🇦🇪</span> UAE Official Plan
+            </button>
+            <button
+              className={`view-mode-btn ${viewMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setViewMode('grid')}
+            >
+              <span>🗓️</span> Month Roadmap
+            </button>
+            <button
+              className={`view-mode-btn ${viewMode === 'milestones' ? 'active' : ''}`}
+              onClick={() => setViewMode('milestones')}
+            >
+              <span>🚩</span> Personal Milestones
+            </button>
+          </div>
         </div>
       </div>
 
@@ -239,9 +241,9 @@ export function Timeline({ data, update }) {
         </div>
       )}
 
-      {/* VIEW 2: MONTH BY MONTH ROADMAP */}
+      {/* VIEW 2: MONTH ROADMAP */}
       {viewMode === 'grid' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
+        <div className="cards-grid">
           {MONTHS.map((m) => {
             const f = MONTH_FOCUS[m] || { title: 'Focus', points: [] };
             const pct = monthProgress(m);

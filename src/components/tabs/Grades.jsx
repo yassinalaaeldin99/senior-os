@@ -47,60 +47,62 @@ function TermRow({ term, termData, subjectKey, update }) {
   return (
     <div
       style={{
-        display: 'grid',
-        gridTemplateColumns: '95px 1fr 1fr 1fr 85px',
-        gap: 8,
-        alignItems: 'center',
-        padding: '9px 10px',
         background: 'var(--bg-elev)',
         borderRadius: 10,
-        marginBottom: 6,
+        padding: '10px 12px',
+        marginBottom: 8,
         border: '1px solid var(--border-soft)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
       }}
     >
-      <div>
-        <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text)' }}>
-          {term.label}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
+            {term.label}
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--text-faint)', marginLeft: 8 }}>
+            Weight: {(term.weight * 100).toFixed(0)}%
+          </span>
         </div>
-        <div style={{ fontSize: 10.5, color: 'var(--text-faint)', fontWeight: 500 }}>
-          Weight: {(term.weight * 100).toFixed(0)}%
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 700,
+            color:
+              tg != null
+                ? tg >= 90
+                  ? 'var(--green)'
+                  : tg >= 75
+                  ? 'var(--amber)'
+                  : 'var(--red)'
+                : 'var(--text-faint)',
+          }}
+        >
+          {tg != null ? `${tg.toFixed(1)}%` : '—'}
         </div>
       </div>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 9.5, color: 'var(--text-faint)', marginBottom: 2, fontWeight: 600 }}>
-          SCH 1 (/20)
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, textAlign: 'center' }}>
+        <div>
+          <div style={{ fontSize: 9.5, color: 'var(--text-faint)', marginBottom: 2, fontWeight: 600 }}>
+            SCH 1 (/20)
+          </div>
+          <GradeInput value={termData?.school1} max={20} onChange={(v) => setField('school1', v)} />
         </div>
-        <GradeInput value={termData?.school1} max={20} onChange={(v) => setField('school1', v)} />
-      </div>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 9.5, color: 'var(--text-faint)', marginBottom: 2, fontWeight: 600 }}>
-          SCH 2 (/20)
+        <div>
+          <div style={{ fontSize: 9.5, color: 'var(--text-faint)', marginBottom: 2, fontWeight: 600 }}>
+            SCH 2 (/20)
+          </div>
+          <GradeInput value={termData?.school2} max={20} onChange={(v) => setField('school2', v)} />
         </div>
-        <GradeInput value={termData?.school2} max={20} onChange={(v) => setField('school2', v)} />
-      </div>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 9.5, color: 'var(--text-faint)', marginBottom: 2, fontWeight: 600 }}>
-          MINISTRY (/100)
+        <div>
+          <div style={{ fontSize: 9.5, color: 'var(--text-faint)', marginBottom: 2, fontWeight: 600 }}>
+            MINISTRY (/100)
+          </div>
+          <GradeInput value={termData?.ministry} max={100} onChange={(v) => setField('ministry', v)} />
         </div>
-        <GradeInput value={termData?.ministry} max={100} onChange={(v) => setField('ministry', v)} />
-      </div>
-      <div
-        style={{
-          textAlign: 'right',
-          paddingRight: 4,
-          fontSize: 14,
-          fontWeight: 700,
-          color:
-            tg != null
-              ? tg >= 90
-                ? 'var(--green)'
-                : tg >= 75
-                ? 'var(--amber)'
-                : 'var(--red)'
-              : 'var(--text-faint)',
-        }}
-      >
-        {tg != null ? `${tg.toFixed(1)}%` : '—'}
       </div>
     </div>
   );
@@ -194,7 +196,7 @@ export function Grades({ data, update }) {
 
   return (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div className="tab-header">
         <div>
           <div className="display" style={{ fontSize: 24, fontWeight: 700 }}>
             Academic Grades
@@ -205,25 +207,27 @@ export function Grades({ data, update }) {
         </div>
 
         {/* View Mode Segmented Controls */}
-        <div className="view-mode-toggle">
-          <button
-            className={`view-mode-btn ${viewMode === 'cards' ? 'active' : ''}`}
-            onClick={() => setViewMode('cards')}
-          >
-            <span>🗂️</span> Cards View
-          </button>
-          <button
-            className={`view-mode-btn ${viewMode === 'table' ? 'active' : ''}`}
-            onClick={() => setViewMode('table')}
-          >
-            <span>📋</span> Matrix Table
-          </button>
-          <button
-            className={`view-mode-btn ${viewMode === 'analytics' ? 'active' : ''}`}
-            onClick={() => setViewMode('analytics')}
-          >
-            <span>📊</span> Analytics
-          </button>
+        <div className="tab-header-actions">
+          <div className="view-mode-toggle">
+            <button
+              className={`view-mode-btn ${viewMode === 'cards' ? 'active' : ''}`}
+              onClick={() => setViewMode('cards')}
+            >
+              <span>🗂️</span> Cards View
+            </button>
+            <button
+              className={`view-mode-btn ${viewMode === 'table' ? 'active' : ''}`}
+              onClick={() => setViewMode('table')}
+            >
+              <span>📋</span> Matrix Table
+            </button>
+            <button
+              className={`view-mode-btn ${viewMode === 'analytics' ? 'active' : ''}`}
+              onClick={() => setViewMode('analytics')}
+            >
+              <span>📊</span> Analytics
+            </button>
+          </div>
         </div>
       </div>
 
@@ -234,7 +238,7 @@ export function Grades({ data, update }) {
           padding: '18px 24px',
           marginBottom: 24,
           display: 'flex',
-          gap: 28,
+          gap: 24,
           alignItems: 'center',
           flexWrap: 'wrap',
           background: 'linear-gradient(135deg, var(--card), var(--card-hi))',
@@ -275,7 +279,7 @@ export function Grades({ data, update }) {
 
       {/* MODE 1: CARDS VIEW */}
       {viewMode === 'cards' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))', gap: 18 }}>
+        <div className="cards-grid">
           {GRADEABLE_SUBJECTS.map((s) => (
             <SubjectCard
               key={s.key}

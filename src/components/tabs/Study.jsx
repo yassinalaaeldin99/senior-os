@@ -1,12 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader, EmptyState, Bar } from '../common';
 import { SUBJECTS, subjInfo } from '../../constants/data';
-import { todayISO, startOfWeek, fmtDate, fmtMins } from '../../utils/helpers';
+import { todayISO, startOfWeek, fmtDate, fmtMins, uid } from '../../utils/helpers';
 
 export function Study({ data, update, openModal }) {
-  const [viewMode, setViewMode] = useState('analytics'); // 'analytics' | 'history'
+  const [viewMode, setViewMode] = useState('timer'); // 'timer' | 'analytics' | 'history'
   const today = todayISO();
   const weekStart = startOfWeek(today);
+
+  // Timer states
+  const [timerMinutes, setTimerMinutes] = useState(25);
+  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [timerSubject, setTimerSubject] = useState('physics');
+  const [timerTopic, setTimerTopic] = useState('');
+  const [loggedSuccess, setLoggedSuccess] = useState(false);
+
+  useEffect(() => {
+    let interval = null;
+    if (timerRunning && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((t) => t - 1);
+      }, 1000);
+    } else if (timeLeft === 0 && timerRunning) {
+      setTimerRunning(false);
+    }
+    return () => clearInterval(interval);
+  }, [timerRunning, timeLeft]);
+
+  const selectPreset = (mins) => {
+    setTimerMinutes(mins);
+    setTimeLeft(mins * 60);
+    setTimerRunning(false);
+  };
+
+  const handleLogTimerSession = () => {
+    const elapsedMins = Math.max(1, Math.round((timerMinutes * 60 - timeLeft) / 60));
+    update((d) => {
+      d.study.unshift({
+        id: uid(),
+        date: todayISO(),
+        subject: timerSubject,
+        topic: timerTopic.trim() || 'Focused Study Session',
+        durationMinutes: elapsedMins,
+        method: 'Pomodoro Focus',
+        notes: '',
+      });
+    });
+    setLoggedSuccess(true);
+    setTimeout(() => setLoggedSuccess(false), 3000);
+    setTimeLeft(timerMinutes * 60);
+    setTimerRunning(false);
+  };
+
+  const formatTimer = (secs) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
 
   const thisWeek = data.study.filter((s) => s.date >= weekStart);
   const bySubject = {};
@@ -26,18 +77,24 @@ export function Study({ data, update, openModal }) {
 
   return (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div className="tab-header">
         <div>
           <div className="display" style={{ fontSize: 24, fontWeight: 700 }}>
-            Study Hours & Logs
+            Study Hours & Focus Timer
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--text-dim)', marginTop: 2 }}>
             Track focused study time, revision sessions, and subject balance
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="tab-header-actions">
           <div className="view-mode-toggle">
+            <button
+              className={`view-mode-btn ${viewMode === 'timer' ? 'active' : ''}`}
+              onClick={() => setViewMode('timer')}
+            >
+              <span>⏱️</span> Focus Timer
+            </button>
             <button
               className={`view-mode-btn ${viewMode === 'analytics' ? 'active' : ''}`}
               onClick={() => setViewMode('analytics')}
@@ -103,9 +160,150 @@ export function Study({ data, update, openModal }) {
         </div>
       </div>
 
-      {/* VIEW 1: ANALYTICS & BREAKDOWN */}
+      {/* VIEW 1: INTERACTIVE FOCUS POMODORO TIMER */}
+      {viewMode === 'timer' && (
+        <div className="cards-grid">
+          <div
+            className="card"
+            style={{
+              padding: '28px 24px',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 18,
+              border: timerRunning ? '1px solid var(--blue)' : '1px solid var(--border-soft)',
+              boxShadow: timerRunning ? '0 0 24px rgba(59,130,246,0.2)' : 'var(--shadow-sm)',
+            }}
+          >
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[25, 45, 60].map((mins) => (
+                <button
+                  key={mins}
+                  onClick={() => selectPreset(mins)}
+                  className="btn-ghost"
+                  style={{
+                    background: timerMinutes === mins ? 'var(--blue-dim)' : 'transparent',
+                    borderColor: timerMinutes === mins ? 'var(--blue)' : 'var(--border)',
+                    color: timerMinutes === mins ? '#93C5FD' : 'var(--text-dim)',
+                    fontWeight: timerMinutes === mins ? 700 : 500,
+                    padding: '5px 12px',
+                    fontSize: 12,
+                  }}
+                >
+                  {mins} min
+                </button>
+              ))}
+            </div>
+
+            {/* Glowing Big Timer Countdown */}
+            <div
+              className="display"
+              style={{
+                fontSize: 'clamp(52px, 12vw, 76px)',
+                fontWeight: 700,
+                color: timerRunning ? 'var(--blue-light)' : 'var(--text)',
+                letterSpacing: 2,
+                fontVariantNumeric: 'tabular-nums',
+                textShadow: timerRunning ? '0 0 30px rgba(59,130,246,0.4)' : 'none',
+              }}
+            >
+              {formatTimer(timeLeft)}
+            </div>
+
+            {/* Subject and Topic Configuration */}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', width: '100%', maxWidth: 420 }}>
+              <select
+                value={timerSubject}
+                onChange={(e) => setTimerSubject(e.target.value)}
+                style={{ flex: 1, minWidth: 160, padding: '8px 12px' }}
+              >
+                {SUBJECTS.filter((s) => s.key !== 'other').map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.emoji} {s.label} ({s.teacher})
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="text"
+                placeholder="Topic (e.g. Electromagnetism)"
+                value={timerTopic}
+                onChange={(e) => setTimerTopic(e.target.value)}
+                style={{ flex: 1, minWidth: 160, padding: '8px 12px' }}
+              />
+            </div>
+
+            {/* Controls */}
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 4 }}>
+              <button
+                onClick={() => setTimerRunning((v) => !v)}
+                className="btn-primary"
+                style={{
+                  fontSize: 15,
+                  padding: '10px 28px',
+                  background: timerRunning ? 'var(--amber)' : 'linear-gradient(135deg, var(--blue), #2563EB)',
+                }}
+              >
+                {timerRunning ? '⏸ Pause' : '▶ Start Focus'}
+              </button>
+
+              <button
+                onClick={() => {
+                  setTimeLeft(timerMinutes * 60);
+                  setTimerRunning(false);
+                }}
+                className="btn-ghost"
+                style={{ padding: '10px 16px', fontSize: 13 }}
+              >
+                ↺ Reset
+              </button>
+
+              <button
+                onClick={handleLogTimerSession}
+                className="btn-ghost"
+                style={{ padding: '10px 16px', fontSize: 13, borderColor: 'var(--green)', color: 'var(--green-light)' }}
+                title="Save time spent as study log"
+              >
+                💾 Log Session
+              </button>
+            </div>
+
+            {loggedSuccess && (
+              <div style={{ color: 'var(--green)', fontSize: 13, fontWeight: 600 }}>
+                ✓ Session logged & synced to database!
+              </div>
+            )}
+          </div>
+
+          {/* Quick Subject Study Breakdown */}
+          <div className="card" style={{ padding: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>
+              📚 Study Time Distribution
+            </div>
+            {SUBJECTS.filter((s) => s.key !== 'other' || bySubject.other).map((s) => {
+              const mins = bySubject[s.key] || 0;
+              return (
+                <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <div style={{ width: 105, fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {s.emoji} {s.label}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <Bar pct={(mins / maxMins) * 100} color={s.color || 'var(--blue)'} />
+                  </div>
+                  <div style={{ width: 60, fontSize: 11.5, color: mins > 0 ? 'var(--text)' : 'var(--text-faint)', textAlign: 'right', fontWeight: mins > 0 ? 600 : 400 }}>
+                    {mins > 0 ? fmtMins(mins) : '—'}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* VIEW 2: ANALYTICS & BREAKDOWN */}
       {viewMode === 'analytics' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 20 }}>
+        <div className="cards-grid">
           {/* Subject Distribution Bar Breakdown */}
           <div className="card" style={{ padding: 20 }}>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>
@@ -183,59 +381,55 @@ export function Study({ data, update, openModal }) {
         </div>
       )}
 
-      {/* VIEW 2: HISTORY TABLE */}
+      {/* VIEW 3: FULL HISTORY LIST */}
       {viewMode === 'history' && (
-        <div className="card" style={{ padding: 12, overflowX: 'auto' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Subject</th>
-                <th>Topic / Chapter</th>
-                <th>Duration</th>
-                <th>Study Method</th>
-                <th>Notes</th>
-                <th style={{ textAlign: 'right' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedSessions.map((s) => {
-                const sub = subjInfo(s.subject);
+        <div className="card" style={{ padding: 16 }}>
+          {sortedSessions.length === 0 && <EmptyState icon="📖" text="No study sessions recorded yet." />}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {sortedSessions.map((s) => {
+              const sub = subjInfo(s.subject);
+              return (
+                <div
+                  key={s.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 14px',
+                    background: 'var(--bg-elev)',
+                    borderRadius: 10,
+                    border: '1px solid var(--border-soft)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: 20 }}>{sub.emoji}</span>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
+                        {sub.label} — {s.topic || 'Revision'}
+                      </div>
+                      <div style={{ fontSize: 11.5, color: 'var(--text-faint)', marginTop: 2 }}>
+                        {fmtDate(s.date)} · Teacher: {sub.teacher} · Method: {s.method || 'Revision'}
+                        {s.notes ? ` · "${s.notes}"` : ''}
+                      </div>
+                    </div>
+                  </div>
 
-                return (
-                  <tr key={s.id}>
-                    <td>
-                      <span style={{ fontWeight: 600 }}>{fmtDate(s.date)}</span>
-                    </td>
-                    <td>
-                      <span style={{ fontWeight: 600, color: sub.color || 'var(--text)' }}>
-                        {sub.emoji} {sub.label}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 600 }}>{s.topic || 'General study'}</div>
-                    </td>
-                    <td>
-                      <span className="chip" style={{ background: 'var(--blue-dim)', color: '#93C5FD' }}>
-                        {fmtMins(s.durationMinutes)}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="chip" style={{ background: 'var(--bg-elev)' }}>
-                        {s.method || 'Revision'}
-                      </span>
-                    </td>
-                    <td style={{ color: 'var(--text-dim)', fontSize: 12 }}>{s.notes || '—'}</td>
-                    <td style={{ textAlign: 'right' }}>
-                      <button onClick={() => remove(s.id)} className="btn-ghost" style={{ padding: '3px 8px', fontSize: 11 }}>
-                        ✕
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span className="chip" style={{ background: 'var(--blue-dim)', color: '#93C5FD', fontWeight: 700, fontSize: 12 }}>
+                      ⏱️ {fmtMins(s.durationMinutes)}
+                    </span>
+                    <button
+                      onClick={() => remove(s.id)}
+                      className="btn-danger"
+                      style={{ padding: '4px 8px', fontSize: 11 }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

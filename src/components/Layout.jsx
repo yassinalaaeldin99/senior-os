@@ -471,7 +471,17 @@ export function Layout({
           </div>
 
           {/* Right: Status Pills & Action Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* Mobile Search Button */}
+            <button
+              onClick={() => setCommandOpen(true)}
+              className="mobile-only btn-ghost"
+              style={{ padding: '6px 8px', fontSize: 13, minWidth: 34, minHeight: 34 }}
+              title="Search"
+            >
+              🔍
+            </button>
+
             {/* Cloud Sync Status Pill */}
             <div
               onClick={() => setTab('settings')}
