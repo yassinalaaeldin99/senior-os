@@ -219,3 +219,115 @@ export async function askSeniorWithGeminiStream({ query, data, history = [], onC
 
   return parseAssistantResponse(accumulatedText);
 }
+
+export async function scanHomeworkWithGemini({ base64Data, mimeType, promptHint = '', data }) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error('Gemini API key is not configured. Please add your key in Settings or click Configure.');
+  }
+
+  const today = todayISO();
+  const subjectsOverview = `
+- Mathematics: Mr. Abdulaziz (key: "mathematics")
+- Physics: Mr. Anas (key: "physics")
+- Chemistry: Mr. Shadi (key: "chemistry")
+- Biology: Mr. Mohammed (key: "biology")
+- English: Mr. Haithem (key: "english")
+- Arabic: Mr. Hossam (key: "arabic")
+- Islamic Studies: Mr. Ismail (key: "islamic")
+- Social Studies: Mr. Karam (key: "social_studies")
+- Other: (key: "other")
+`;
+
+  const prompt = `You are SENIOR OS's expert AI Vision & OCR Homework Extractor.
+The student (Yassin, Grade 12 Senior, Class of 2027 Pre-Med) has uploaded a photo or PDF of their school homework, whiteboard notes, assignment sheet, or notebook.
+The text on the paper may be in Arabic (العربية), English, or both, and may be handwritten or printed.
+
+TODAY'S DATE: ${today}.
+OFFICIAL CURRICULUM SUBJECTS & TEACHERS:
+${subjectsOverview}
+
+YOUR GOAL:
+1. Thoroughly read and OCR all text in the image/PDF, including handwritten Arabic, English, problem numbers, book pages, and dates.
+2. Group the assignments by subject.
+   - For example: if the paper says "واجب الرياضيات ص 45 تدريب 1 إلى 5" or "أ/ عبدالعزيز رياضيات", assign it to "mathematics" with teacher "Mr. Abdulaziz".
+   - If it says "Physics homework chapter 3 problems" or "واجب فيزياء أ/ أنس", assign to "physics" with teacher "Mr. Anas".
+   - If it says "كيمياء أ/ شادي", assign to "chemistry" with teacher "Mr. Shadi".
+   - If it says "أحياء أ/ محمد", assign to "biology" with teacher "Mr. Mohammed".
+   - If it says "English essay / Haithem", assign to "english" with teacher "Mr. Haithem".
+   - If it says "عربي أ/ حسام" or "قواعد النحو", assign to "arabic" with teacher "Mr. Hossam".
+   - If it says "تربية إسلامية أ/ إسماعيل" or "حديث/قرآن", assign to "islamic" with teacher "Mr. Ismail".
+   - If it says "دراسات اجتماعية أ/ كرم", assign to "social_studies" with teacher "Mr. Karam".
+3. Return a clean JSON object containing:
+   - "summary": A 1-2 sentence overview of what you found on the paper (in Arabic or English).
+   - "tasks": An array of extracted homework tasks, where each task has:
+     - "name": Concise name of the assignment in Arabic or English (e.g. "حل تدريبات المتجهات ص 45").
+     - "subject": "mathematics" | "physics" | "chemistry" | "biology" | "english" | "arabic" | "islamic" | "social_studies" | "other"
+     - "teacher": Teacher name (e.g. "Mr. Abdulaziz", "Mr. Anas", "Mr. Shadi", etc.)
+     - "dueDate": Estimated due date in format "YYYY-MM-DD" (if date mentioned on paper use it; otherwise default to tomorrow or within 2-3 days).
+     - "priority": "high" | "medium" | "low"
+     - "estMinutes": Estimated duration in minutes (e.g. 25, 35, 45, 60).
+     - "notes": Any specific instructions, questions, page numbers, or remarks from the paper.
+
+${promptHint ? `USER NOTE: "${promptHint}"` : ''}
+
+Respond ONLY with valid JSON matching this schema:
+{
+  "summary": "...",
+  "tasks": [
+    {
+      "name": "...",
+      "subject": "...",
+      "teacher": "...",
+      "dueDate": "YYYY-MM-DD",
+      "priority": "medium",
+      "estMinutes": 30,
+      "notes": "..."
+    }
+  ]
+}`;
+
+  // Use gemini-1.5-flash which has multimodal vision & PDF OCR support
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              inline_data: {
+                mime_type: mimeType || 'image/jpeg',
+                data: base64Data,
+              },
+            },
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.1,
+        responseMimeType: 'application/json',
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Gemini API error (${response.status})`);
+  }
+
+  const result = await response.json();
+  const rawJson = result.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!rawJson) {
+    throw new Error('No response received from Gemini.');
+  }
+
+  return JSON.parse(rawJson);
+}
+

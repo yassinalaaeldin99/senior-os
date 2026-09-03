@@ -3,7 +3,7 @@ import { PageHeader, EmptyState, Chip } from '../common';
 import { SUBJECTS, PRIORITIES, STATUSES, subjInfo } from '../../constants/data';
 import { todayISO, daysBetween, fmtDate } from '../../utils/helpers';
 
-export function Homework({ data, update, openModal }) {
+export function Homework({ data, update, openModal, openScanner }) {
   const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'table' | 'kanban'
   const [timeFilter, setTimeFilter] = useState('all');
   const [subjFilter, setSubjFilter] = useState('all');
@@ -75,6 +75,20 @@ export function Homework({ data, update, openModal }) {
               <span>📑</span> Kanban
             </button>
           </div>
+
+          <button
+            onClick={openScanner}
+            className="btn-ghost"
+            style={{
+              borderColor: 'var(--blue)',
+              color: 'var(--blue-light)',
+              background: 'var(--blue-dim)',
+              fontWeight: 600,
+            }}
+            title="Snap or upload homework photo/PDF to auto-sort by subject"
+          >
+            <span>📷</span> Scan Paper / PDF
+          </button>
 
           <button onClick={() => openModal({ type: 'homework' })} className="btn-primary">
             <span>+</span> Add Homework

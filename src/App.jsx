@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import { Dashboard, Homework, CalendarPage, Exams, Study, Grades, Goals, Ielts, Medicine, Timeline, Settings } from './components/tabs';
 import { QuickModal } from './components/modals/QuickModal';
 import { AiPanel } from './components/modals/AiPanel';
+import { ScannerModal } from './components/modals/ScannerModal';
 
 export function App() {
   const [data, setData, ready, syncStatus] = useStore();
@@ -11,6 +12,7 @@ export function App() {
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [modal, setModal] = useState(null); // {type, editing}
   const [aiOpen, setAiOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const update = useCallback(
     (fn) => {
@@ -53,11 +55,28 @@ export function App() {
         setTab={setTab}
         setAiOpen={setAiOpen}
         setModal={setModal}
+        openScanner={() => setScannerOpen(true)}
         quickAddOpen={quickAddOpen}
         setQuickAddOpen={setQuickAddOpen}
       >
-        {tab === 'dashboard' && <Dashboard data={data} update={update} setTab={setTab} openModal={setModal} setAiOpen={setAiOpen} />}
-        {tab === 'homework' && <Homework data={data} update={update} openModal={setModal} />}
+        {tab === 'dashboard' && (
+          <Dashboard
+            data={data}
+            update={update}
+            setTab={setTab}
+            openModal={setModal}
+            setAiOpen={setAiOpen}
+            openScanner={() => setScannerOpen(true)}
+          />
+        )}
+        {tab === 'homework' && (
+          <Homework
+            data={data}
+            update={update}
+            openModal={setModal}
+            openScanner={() => setScannerOpen(true)}
+          />
+        )}
         {tab === 'calendar' && <CalendarPage data={data} />}
         {tab === 'exams' && <Exams data={data} update={update} openModal={setModal} />}
         {tab === 'study' && <Study data={data} update={update} openModal={setModal} />}
@@ -89,6 +108,7 @@ export function App() {
               Quick Create
             </div>
             {[
+              { t: 'scanner', l: '📷 Scan Homework (AI)', i: '📸', highlight: true },
               { t: 'homework', l: 'Homework Assignment', i: '📚' },
               { t: 'exam', l: 'Upcoming Exam', i: '📝' },
               { t: 'study', l: 'Study Session', i: '📖' },
@@ -101,14 +121,25 @@ export function App() {
               <div
                 key={o.t}
                 className="nav-item"
-                style={{ borderRadius: 8, padding: '8px 10px' }}
+                style={{
+                  borderRadius: 8,
+                  padding: '8px 10px',
+                  background: o.highlight ? 'linear-gradient(90deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15))' : 'transparent',
+                  border: o.highlight ? '1px solid var(--blue-glow)' : 'none',
+                }}
                 onClick={() => {
-                  setModal({ type: o.t });
+                  if (o.t === 'scanner') {
+                    setScannerOpen(true);
+                  } else {
+                    setModal({ type: o.t });
+                  }
                   setQuickAddOpen(false);
                 }}
               >
                 <span style={{ fontSize: 16 }}>{o.i}</span>
-                <span>{o.l}</span>
+                <span style={{ fontWeight: o.highlight ? 700 : 500, color: o.highlight ? '#93C5FD' : 'inherit' }}>
+                  {o.l}
+                </span>
               </div>
             ))}
           </div>
@@ -131,6 +162,7 @@ export function App() {
       </div>
 
       {modal && <QuickModal modal={modal} data={data} update={update} onClose={() => setModal(null)} />}
+      {scannerOpen && <ScannerModal data={data} update={update} onClose={() => setScannerOpen(false)} />}
       {aiOpen && <AiPanel data={data} update={update} onClose={() => setAiOpen(false)} />}
     </>
   );

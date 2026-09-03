@@ -69,7 +69,7 @@ export function smartTasks(data) {
   return items.sort((a, b) => score(b) - score(a));
 }
 
-export function Dashboard({ data, update, setTab, openModal, setAiOpen }) {
+export function Dashboard({ data, update, setTab, openModal, setAiOpen, openScanner }) {
   const [dashboardView, setDashboardView] = useState('bento'); // 'bento' | 'focus'
   const [selectedSubjFilter, setSelectedSubjFilter] = useState('all');
   const today = todayISO();
@@ -442,6 +442,20 @@ export function Dashboard({ data, update, setTab, openModal, setAiOpen }) {
                 ⚡ Quick Action Launcher
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <button
+                  onClick={openScanner}
+                  className="btn-primary"
+                  style={{
+                    gridColumn: 'span 2',
+                    justifyContent: 'center',
+                    padding: '10px 12px',
+                    background: 'linear-gradient(135deg, var(--blue), var(--violet))',
+                    fontSize: 13,
+                  }}
+                  title="Snap photo or upload PDF of homework sheet to auto-sort"
+                >
+                  📷 Scan Homework (AI Vision)
+                </button>
                 <button
                   onClick={() => openModal && openModal({ type: 'homework' })}
                   className="btn-ghost"

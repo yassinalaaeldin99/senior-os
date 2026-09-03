@@ -11,6 +11,7 @@ export function Layout({
   setTab,
   setAiOpen,
   setModal,
+  openScanner,
   quickAddOpen,
   setQuickAddOpen,
 }) {
@@ -156,6 +157,7 @@ export function Layout({
     { type: 'nav', key: 'medicine', label: 'Medicine Study Plan', icon: '🩺', cat: 'Navigation' },
     { type: 'nav', key: 'timeline', label: 'Timeline & MOE Plan', icon: '🗓️', cat: 'Navigation' },
     { type: 'nav', key: 'settings', label: 'Settings & Backups', icon: '⚙️', cat: 'Navigation' },
+    { type: 'action', action: openScanner, label: 'Scan Homework Photo / PDF (AI Vision)', icon: '📷', cat: 'AI Actions' },
     { type: 'action', action: () => setAiOpen(true), label: 'Ask SENIOR AI Mentor', icon: '✦', cat: 'Actions' },
     { type: 'action', action: () => setModal({ type: 'homework' }), label: 'Add New Homework', icon: '➕', cat: 'Actions' },
     { type: 'action', action: () => setModal({ type: 'exam' }), label: 'Schedule New Exam', icon: '➕', cat: 'Actions' },
@@ -480,6 +482,26 @@ export function Layout({
               title="Search"
             >
               🔍
+            </button>
+
+            {/* AI Scanner Header Button */}
+            <button
+              onClick={openScanner}
+              className="btn-ghost"
+              style={{
+                padding: '6px 9px',
+                fontSize: 12.5,
+                minWidth: 34,
+                minHeight: 34,
+                borderColor: 'var(--blue)',
+                color: 'var(--blue-light)',
+                background: 'var(--blue-dim)',
+                fontWeight: 600,
+              }}
+              title="Snap photo or upload PDF of homework sheet to auto-sort"
+            >
+              <span>📷</span>
+              <span className="desktop-sidebar" style={{ marginLeft: 4 }}>Scan</span>
             </button>
 
             {/* Cloud Sync Status Pill */}
