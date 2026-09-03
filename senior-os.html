@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SENIOR OS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/3.4.1/tailwind.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E14; --bg-elev:#0F141C; --card:#131924; --card-hi:#171F2C;
+    --border:#212B3A; --border-soft:#1A222F;
+    --text:#EAEEF5; --text-dim:#9AA6B8; --text-faint:#5C6B82;
+    --blue:#5B8DEF; --blue-dim:#2C4066;
+    --green:#3ED68C; --green-dim:#1E3F30;
+    --amber:#F0A93F; --amber-dim:#4A3A1B;
+    --red:#EF6461; --red-dim:#4A2323;
+    --violet:#9C87F5;
+  }
+  *{box-sizing:border-box;}
+  html,body{background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; margin:0; -webkit-font-smoothing:antialiased;}
+  ::-webkit-scrollbar{width:8px; height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  .display{font-family:'Fraunces',serif;}
+  .card{background:var(--card); border:1px solid var(--border-soft); border-radius:14px;}
+  .card-hi{background:var(--card-hi); border:1px solid var(--border);}
+  .fade-in{animation:fadeIn .35s ease;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+  input,textarea,select{background:var(--bg-elev); border:1px solid var(--border); color:var(--text); border-radius:9px; padding:8px 11px; font-size:13.5px; font-family:inherit; outline:none;}
+  input:focus,textarea:focus,select:focus{border-color:var(--blue);}
+  button{font-family:inherit;}
+  .btn-primary{background:var(--blue); color:#fff; border-radius:9px; padding:9px 16px; font-weight:600; font-size:13.5px; border:none; cursor:pointer;}
+  .btn-primary:hover{opacity:.9;}
+  .btn-ghost{background:transparent; border:1px solid var(--border); color:var(--text-dim); border-radius:9px; padding:8px 14px; font-size:13.5px; cursor:pointer;}
+  .btn-ghost:hover{border-color:var(--blue); color:var(--text);}
+  .nav-item{display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px; color:var(--text-dim); font-size:13.5px; font-weight:500; cursor:pointer;}
+  .nav-item:hover{background:var(--card-hi); color:var(--text);}
+  .nav-item.active{background:var(--blue-dim); color:#C9D8FF;}
+  .bar-track{background:var(--bg-elev); border-radius:6px; overflow:hidden; height:8px;}
+  .bar-fill{height:100%; border-radius:6px;}
+  .chip{font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px; letter-spacing:.2px;}
+  .modal-overlay{position:fixed; inset:0; background:rgba(5,7,11,0.7); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; z-index:50; padding:20px;}
+  .scrollbar-thin{scrollbar-width:thin;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const {useState,useEffect,useMemo,useRef,useCallback} = React;
+
+/* ---------------- constants ---------------- */
+const SUBJECTS = [
+  {key:'biology', label:'Biology', emoji:'🧬', color:'#3ED68C'},
+  {key:'chemistry', label:'Chemistry', emoji:'🧪', color:'#5B8DEF'},
+  {key:'physics', label:'Physics', emoji:'⚡', color:'#F0A93F'},
+  {key:'mathematics', label:'Mathematics', emoji:'📐', color:'#9C87F5'},
+  {key:'other', label:'Other', emoji:'📚', color:'#9AA6B8'},
+];
+const subjInfo = k => SUBJECTS.find(s=>s.key===k) || SUBJECTS[4];
+
+const PRIORITIES = {high:{label:'High',color:'var(--red)'}, medium:{label:'Medium',color:'var(--amber)'}, low:{label:'Low',color:'var(--green)'}};
+const STATUSES = {not_started:{label:'Not Started',color:'var(--text-faint)'}, in_progress:{label:'In Progress',color:'var(--blue)'}, completed:{label:'Completed',color:'var(--green)'}, overdue:{label:'Overdue',color:'var(--red)'}};
+
+const MONTHS = ['September','October','November','December','January','February','March','April','May','June'];
+const MONTH_FOCUS = {
+  September:{title:'Start Strong', points:['Establish routine','Track every homework assignment','Build study habits','Start IELTS preparation','Research medical career options']},
+  October:{title:'Build Momentum', points:['Keep grades high','Continue IELTS','Start serious country research','Prepare for exams early']},
+  November:{title:'Prepare for Winter Break', points:['Strong academic performance','Increase IELTS preparation','Narrow medical-study countries','Build country comparison list']},
+  December:{title:'Winter Break Mission', points:['Finish IELTS','Choose country','Choose target university']},
+  January:{title:'Second Term Begins', points:['Confirm target university','Start application prep','Keep grades strong']},
+  February:{title:'Applications Groundwork', points:['Refine application materials','Maintain grades','Follow up on requirements']},
+  March:{title:'Push Through', points:['Mock exams','Application deadlines','Stay consistent']},
+  April:{title:'Final Stretch', points:['Exam revision','Finalize applications','Protect study hours']},
+  May:{title:'Exam Season', points:['Final exams','Peak revision','Stay healthy']},
+  June:{title:'Finish Line', points:['Graduation','Wrap up applications','Reflect on the year']},
+};
+const DEFAULT_MILESTONES = [
+  {id:'m1', name:'Senior Year Started', date:'2026-09-01', emoji:'🎓'},
+  {id:'m2', name:'First Term Complete', date:'2026-12-01', emoji:'📚'},
+  {id:'m3', name:'IELTS Completed', date:'2026-12-20', emoji:'🇬🇧'},
+  {id:'m4', name:'Country Selected', date:'2026-12-27', emoji:'🌍'},
+  {id:'m5', name:'University Selected', date:'2027-01-03', emoji:'🩺'},
+  {id:'m6', name:'Second Term Started', date:'2027-01-05', emoji:'📖'},
+  {id:'m7', name:'Applications', date:'2027-03-01', emoji:'📝'},
+  {id:'m8', name:'Graduation', date:'2027-06-15', emoji:'🎓'},
+  {id:'m9', name:'University Begins', date:'2027-09-01', emoji:'🇺🇳'},
+];
+const COUNTRY_LIB = [
+  {name:'Germany', flag:'🇩🇪'},{name:'UK', flag:'🇬🇧'},{name:'UAE', flag:'🇦🇪'},{name:'Egypt', flag:'🇪🇬'},
+  {name:'Hungary', flag:'🇭🇺'},{name:'Ireland', flag:'🇮🇪'},{name:'Australia', flag:'🇦🇺'},{name:'Canada', flag:'🇨🇦'},
+  {name:'USA', flag:'🇺🇸'},{name:'Poland', flag:'🇵🇱'},{name:'Czech Republic', flag:'🇨🇿'},{name:'Netherlands', flag:'🇳🇱'},
+];
+
+const uid = () => Math.random().toString(36).slice(2,10);
+const todayISO = () => new Date().toISOString().slice(0,10);
+const fmtDate = (iso) => { if(!iso) return '—'; const d=new Date(iso+'T00:00:00'); return d.toLocaleDateString('en-US',{weekday:'short', month:'short', day:'numeric'}); };
+const daysBetween = (a,b) => Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00'))/86400000);
+const startOfWeek = (d) => { const dt=new Date(d); const day=dt.getDay(); const diff=(day===0?-6:1)-day; dt.setDate(dt.getDate()+diff); return dt.toISOString().slice(0,10); };
+
+/* ---------------- persistence ---------------- */
+const STORAGE_KEY = 'senior-os-data-v1';
+const defaultData = () => ({
+  homework: [],
+  exams: [],
+  study: [],
+  grades: [],
+  goals: {year:[
+    {id:uid(), text:'Graduate Senior Year with 95%+', done:false},
+    {id:uid(), text:'Excellent Chemistry grade', done:false},
+    {id:uid(), text:'Excellent Biology grade', done:false},
+    {id:uid(), text:'Excellent Physics grade', done:false},
+    {id:uid(), text:'Excellent Mathematics grade', done:false},
+    {id:uid(), text:'IELTS 7.5+', done:false},
+    {id:uid(), text:'Choose medical-study country', done:false},
+    {id:uid(), text:'Choose target university', done:false},
+  ], monthly:{}, weekly:[]},
+  ielts: {target:7.5, current:{listening:7.0, reading:7.0, writing:6.0, speaking:6.5}, examDate:'2026-12-15', sessions:[], mockTests:[]},
+  medicine: {countries:[], universities:[], decidedCountry:null, decidedUniversity:null},
+  milestones: DEFAULT_MILESTONES.map(m=>({...m, done:false})),
+  settings: {name:'Yassin', yearStart:'2026-09-01', graduation:'2027-06-15'},
+});
+
+function useStore(){
+  const [data, setData] = useState(null);
+  const [ready, setReady] = useState(false);
+  useEffect(()=>{
+    (async()=>{
+      try{
+        const res = await window.storage.get(STORAGE_KEY);
+        if(res && res.value){ setData(JSON.parse(res.value)); }
+        else { setData(defaultData()); }
+      }catch(e){ setData(defaultData()); }
+      setReady(true);
+    })();
+  },[]);
+  useEffect(()=>{
+    if(!ready || !data) return;
+    const t = setTimeout(()=>{
+      window.storage.set(STORAGE_KEY, JSON.stringify(data)).catch(()=>{});
+    }, 300);
+    return ()=>clearTimeout(t);
+  },[data, ready]);
+  return [data, setData, ready];
+}
+
+/* ---------------- small UI atoms ---------------- */
+function Bar({pct, color}){
+  return <div className="bar-track"><div className="bar-fill" style={{width:`${Math.max(0,Math.min(100,pct))}%`, background:color||'var(--blue)'}}/></div>;
+}
+function Chip({children, color, bg}){
+  return <span className="chip" style={{color, background:bg}}>{children}</span>;
+}
+function IconBtn({onClick, children, title}){
+  return <button onClick={onClick} title={title} className="btn-ghost" style={{padding:'6px 10px'}}>{children}</button>;
+}
+function Field({label, children}){
+  return <label style={{display:'block', marginBottom:10}}>
+    <div style={{fontSize:12, color:'var(--text-dim)', marginBottom:4, fontWeight:500}}>{label}</div>
+    {children}
+  </label>;
+}
+function Modal({title, onClose, children, wide}){
+  return <div className="modal-overlay" onClick={onClose}>
+    <div className="card-hi fade-in" style={{width: wide?640:460, maxWidth:'92vw', maxHeight:'86vh', overflowY:'auto', padding:22}} onClick={e=>e.stopPropagation()}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16}}>
+        <div className="display" style={{fontSize:19, fontWeight:600}}>{title}</div>
+        <button onClick={onClose} className="btn-ghost" style={{padding:'4px 10px'}}>✕</button>
+      </div>
+      {children}
+    </div>
+  </div>;
+}
+function EmptyState({icon, text}){
+  return <div style={{textAlign:'center', padding:'34px 12px', color:'var(--text-faint)'}}>
+    <div style={{fontSize:26, marginBottom:6}}>{icon}</div>
+    <div style={{fontSize:13}}>{text}</div>
+  </div>;
+}
+
+/* ---------------- App ---------------- */
+function App(){
+  const [data, setData, ready] = useStore();
+  const [tab, setTab] = useState('dashboard');
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [modal, setModal] = useState(null); // {type, editing}
+  const [aiOpen, setAiOpen] = useState(false);
+
+  const update = useCallback((fn)=>{ setData(prev=>{ const next = JSON.parse(JSON.stringify(prev)); fn(next); return next; }); },[setData]);
+
+  if(!ready || !data){
+    return <div style={{height:'100vh', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--text-dim)'}}>Loading SENIOR OS…</div>;
+  }
+
+  const NAV = [
+    {key:'dashboard', label:'Dashboard', icon:'🏠'},
+    {key:'homework', label:'Homework', icon:'📚'},
+    {key:'calendar', label:'Calendar', icon:'📅'},
+    {key:'exams', label:'Exams', icon:'📝'},
+    {key:'study', label:'Study', icon:'📖'},
+    {key:'grades', label:'Grades', icon:'📊'},
+    {key:'goals', label:'Goals', icon:'🎯'},
+    {key:'ielts', label:'IELTS', icon:'🇬🇧'},
+    {key:'medicine', label:'Medicine Plan', icon:'🩺'},
+    {key:'timeline', label:'Timeline', icon:'🗓️'},
+    {key:'settings', label:'Settings', icon:'⚙️'},
+  ];
+
+  return <div style={{display:'flex', minHeight:'100vh'}}>
+    {/* Sidebar */}
+    <div style={{width:224, borderRight:'1px solid var(--border-soft)', padding:'20px 12px', position:'sticky', top:0, height:'100vh', flexShrink:0}}>
+      <div style={{padding:'4px 10px 22px'}}>
+        <div className="display" style={{fontSize:20, fontWeight:600, letterSpacing:'.3px'}}>SENIOR<span style={{color:'var(--blue)'}}>OS</span></div>
+        <div style={{fontSize:11, color:'var(--text-faint)', marginTop:2}}>Class of 2027</div>
+      </div>
+      <div style={{display:'flex', flexDirection:'column', gap:2}}>
+        {NAV.map(n=>(
+          <div key={n.key} className={"nav-item" + (tab===n.key ? " active":"")} onClick={()=>setTab(n.key)}>
+            <span>{n.icon}</span><span>{n.label}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{position:'absolute', bottom:20, left:12, right:12}}>
+        <div className="nav-item" onClick={()=>setAiOpen(true)} style={{border:'1px solid var(--border)'}}>
+          <span>✦</span><span>Ask SENIOR</span>
+        </div>
+      </div>
+    </div>
+
+    {/* Main */}
+    <div style={{flex:1, padding:'26px 34px 90px', maxWidth:1180}}>
+      {tab==='dashboard' && <Dashboard data={data} update={update} setTab={setTab}/>}
+      {tab==='homework' && <Homework data={data} update={update} openModal={setModal}/>}
+      {tab==='calendar' && <CalendarPage data={data}/>}
+      {tab==='exams' && <Exams data={data} update={update} openModal={setModal}/>}
+      {tab==='study' && <Study data={data} update={update} openModal={setModal}/>}
+      {tab==='grades' && <Grades data={data} update={update} openModal={setModal}/>}
+      {tab==='goals' && <Goals data={data} update={update}/>}
+      {tab==='ielts' && <Ielts data={data} update={update} openModal={setModal}/>}
+      {tab==='medicine' && <Medicine data={data} update={update} openModal={setModal}/>}
+      {tab==='timeline' && <Timeline data={data} update={update}/>}
+      {tab==='settings' && <Settings data={data} update={update}/>}
+    </div>
+
+    {/* Quick add floating button */}
+    <div style={{position:'fixed', right:28, bottom:28, zIndex:40}}>
+      {quickAddOpen && <div className="card-hi fade-in" style={{position:'absolute', bottom:60, right:0, width:210, padding:8}}>
+        {[
+          {t:'homework', l:'Homework', i:'📚'}, {t:'exam', l:'Exam', i:'📝'}, {t:'study', l:'Study Session', i:'📖'},
+          {t:'grade', l:'Grade', i:'📊'}, {t:'goal', l:'Goal', i:'🎯'}, {t:'ielts', l:'IELTS Session', i:'🇬🇧'},
+          {t:'university', l:'University', i:'🩺'}, {t:'event', l:'Important Event', i:'🗓️'},
+        ].map(o=>(
+          <div key={o.t} className="nav-item" onClick={()=>{setModal({type:o.t}); setQuickAddOpen(false);}}>
+            <span>{o.i}</span><span>{o.l}</span>
+          </div>
+        ))}
+      </div>}
+      <button onClick={()=>setQuickAddOpen(v=>!v)} className="btn-primary" style={{width:52, height:52, borderRadius:'50%', fontSize:22, boxShadow:'0 8px 24px rgba(91,141,239,.35)'}}>{quickAddOpen?'✕':'+'}</button>
+    </div>
+
+    {modal && <QuickModal modal={modal} data={data} update={update} onClose={()=>setModal(null)}/>}
+    {aiOpen && <AiPanel data={data} onClose={()=>setAiOpen(false)}/>}
+  </div>;
+}
+
+/* ---------------- Dashboard ---------------- */
+function smartTasks(data){
+  const today = todayISO();
+  const items = [];
+  data.homework.filter(h=>h.status!=='completed').forEach(h=>{
+    const days = daysBetween(today, h.dueDate);
+    items.push({kind:'homework', ref:h, date:h.dueDate, days, priority:h.priority, label:`${subjInfo(h.subject).emoji} ${h.name}`, sub: days<0?'Overdue':(days===0?'Due today':days===1?'Due tomorrow':`Due in ${days} days`), est:h.estMinutes});
+  });
+  data.exams.forEach(e=>{
+    const days = daysBetween(today, e.date);
+    if(days>=0 && days<=10) items.push({kind:'exam', ref:e, date:e.date, days, priority: days<=3?'high':'medium', label:`${subjInfo(e.subject).emoji} ${e.name}`, sub: days===0?'Today':`In ${days} days`, est:null});
+  });
+  const score = t => {
+    let s = 0;
+    if(t.days<0) s += 1000;
+    else s += Math.max(0, 30-t.days)*10;
+    s += t.priority==='high'?300:t.priority==='medium'?150:50;
+    if(t.kind==='exam') s += 120;
+    return s;
+  };
+  return items.sort((a,b)=>score(b)-score(a));
+}
+
+function Dashboard({data, update, setTab}){
+  const today = todayISO();
+  const tasks = smartTasks(data).slice(0,8);
+  const weekStart = startOfWeek(today);
+  const dueThisWeek = data.homework.filter(h=> h.status!=='completed' && daysBetween(today,h.dueDate)>=0 && daysBetween(today,h.dueDate)<=7).length;
+  const upcomingExams = data.exams.filter(e=>daysBetween(today,e.date)>=0).length;
+  const studyMinsWeek = data.study.filter(s=>s.date>=weekStart).reduce((a,s)=>a+Number(s.durationMinutes||0),0);
+  const avg = weightedAverage(data.grades);
+  const ieltsAvg = ((data.ielts.current.listening+data.ielts.current.reading+data.ielts.current.writing+data.ielts.current.speaking)/4).toFixed(1);
+  const medicineStatus = data.medicine.decidedCountry ? data.medicine.decidedCountry.name : 'Not decided';
+  const curMonth = currentSeniorMonth(data.settings.yearStart);
+
+  const toggleHomework = (id) => update(d=>{
+    const h = d.homework.find(x=>x.id===id);
+    if(h) h.status = h.status==='completed' ? 'not_started' : 'completed';
+  });
+
+  return <div className="fade-in">
+    <div style={{marginBottom:26}}>
+      <div className="display" style={{fontSize:29, fontWeight:600}}>Good {timeOfDay()}, {data.settings.name}.</div>
+      <div style={{color:'var(--text-dim)', fontSize:14, marginTop:4}}>Senior Year 2026–27 · {new Date().toLocaleDateString('en-US',{weekday:'long', month:'long', day:'numeric'})}</div>
+    </div>
+
+    <div style={{display:'grid', gridTemplateColumns:'1.5fr 1fr', gap:20}}>
+      <div>
+        <SectionTitle>Today &amp; upcoming</SectionTitle>
+        <div className="card" style={{padding:16}}>
+          {tasks.length===0 && <EmptyState icon="🌿" text="Nothing urgent — add homework or exams to see them prioritized here."/>}
+          {tasks.map((t,i)=>(
+            <div key={i} style={{display:'flex', alignItems:'center', gap:12, padding:'11px 4px', borderBottom: i<tasks.length-1 ? '1px solid var(--border-soft)':'none'}}>
+              {t.kind==='homework' ? (
+                <input type="checkbox" checked={t.ref.status==='completed'} onChange={()=>toggleHomework(t.ref.id)} style={{width:16, height:16, accentColor:'var(--green)'}}/>
+              ) : <span style={{fontSize:14}}>📝</span>}
+              <div style={{flex:1}}>
+                <div style={{fontSize:13.5, fontWeight:500}}>{t.label}</div>
+                <div style={{fontSize:11.5, color:'var(--text-faint)'}}>{t.sub}{t.est?` · ${t.est} min`:''}</div>
+              </div>
+              <Chip color={t.days<0?'var(--red)':PRIORITIES[t.priority]?.color||'var(--text-dim)'} bg={t.days<0?'var(--red-dim)':'transparent'}>{t.days<0?'Overdue':t.priority}</Chip>
+            </div>
+          ))}
+        </div>
+
+        <SectionTitle style={{marginTop:22}}>Senior Year</SectionTitle>
+        <div className="card" style={{padding:18}}>
+          <div style={{display:'flex', flexDirection:'column', gap:9}}>
+            {MONTHS.slice(0,6).map((m,i)=>{
+              const pct = monthProgress(m, data.settings.yearStart);
+              return <div key={m} style={{display:'flex', alignItems:'center', gap:10}}>
+                <div style={{width:70, fontSize:12, color: m===curMonth?'var(--text)':'var(--text-dim)', fontWeight: m===curMonth?600:400}}>{m}</div>
+                <div style={{flex:1}}><Bar pct={pct} color={m===curMonth?'var(--blue)':'var(--border)'}/></div>
+              </div>;
+            })}
+          </div>
+          <div style={{marginTop:16, padding:'12px 14px', background:'var(--bg-elev)', borderRadius:10, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+            <div>
+              <div style={{fontSize:11, color:'var(--text-faint)'}}>Next major milestone</div>
+              <div style={{fontSize:14, fontWeight:600}}>🎄 Winter Break</div>
+            </div>
+            <div style={{fontSize:11.5, color:'var(--text-dim)', textAlign:'right'}}>Finish IELTS · Choose country · Choose university</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Quick stats</SectionTitle>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
+          <StatCard label="Homework" value={dueThisWeek} sub="due this week" onClick={()=>setTab('homework')}/>
+          <StatCard label="Exams" value={upcomingExams} sub="upcoming" onClick={()=>setTab('exams')}/>
+          <StatCard label="Study" value={fmtMins(studyMinsWeek)} sub="this week" onClick={()=>setTab('study')}/>
+          <StatCard label="Average" value={avg!=null?`${avg.toFixed(1)}%`:'—'} sub="current" onClick={()=>setTab('grades')}/>
+          <StatCard label="IELTS" value={`${ieltsAvg} → ${data.ielts.target}`} sub="target" onClick={()=>setTab('ielts')}/>
+          <StatCard label="Medicine" value={medicineStatus} sub="decision" small onClick={()=>setTab('medicine')}/>
+        </div>
+
+        <SectionTitle style={{marginTop:22}}>Main objective</SectionTitle>
+        <div className="card" style={{padding:18, borderLeft:'3px solid var(--blue)'}}>
+          <div style={{fontSize:13.5, lineHeight:1.55, color:'var(--text-dim)'}}>Finish Senior Year with the strongest grades possible while completing IELTS and choosing your medical-school destination during Winter Break.</div>
+        </div>
+      </div>
+    </div>
+  </div>;
+}
+function SectionTitle({children, style}){ return <div style={{fontSize:12.5, fontWeight:600, color:'var(--text-dim)', marginBottom:10, ...style}}>{children}</div>; }
+function StatCard({label, value, sub, onClick, small}){
+  return <div className="card" style={{padding:'14px 16px', cursor:'pointer'}} onClick={onClick}>
+    <div style={{fontSize:11.5, color:'var(--text-faint)', marginBottom:6}}>{label}</div>
+    <div className="display" style={{fontSize: small?18:22, fontWeight:600}}>{value}</div>
+    <div style={{fontSize:11, color:'var(--text-dim)', marginTop:2}}>{sub}</div>
+  </div>;
+}
+function timeOfDay(){ const h=new Date().getHours(); return h<12?'morning':h<18?'afternoon':'evening'; }
+function fmtMins(m){ const h=Math.floor(m/60), mm=m%60; return h>0?`${h}h ${mm}m`:`${mm}m`; }
+function weightedAverage(grades){
+  if(!grades.length) return null;
+  let num=0, den=0;
+  grades.forEach(g=>{ const w=Number(g.weight)||1; num += (Number(g.grade)/Number(g.maxGrade))*100*w; den += w; });
+  return den? num/den : null;
+}
+function currentSeniorMonth(yearStart){
+  const now = new Date();
+  const idx = now.getMonth(); // 0=Jan
+  const map = {8:'September',9:'October',10:'November',11:'December',0:'January',1:'February',2:'March',3:'April',4:'May',5:'June'};
+  return map[idx] || 'September';
+}
+function monthProgress(monthName, yearStart){
+  const yearMap = {September:2026,October:2026,November:2026,December:2026,January:2027,February:2027,March:2027,April:2027,May:2027,June:2027};
+  const monthIdx = {September:8,October:9,November:10,December:11,January:0,February:1,March:2,April:3,May:4,June:5};
+  const y = yearMap[monthName], mi = monthIdx[monthName];
+  const start = new Date(y, mi, 1), end = new Date(y, mi+1, 1);
+  const now = new Date();
+  if(now < start) return 0;
+  if(now >= end) return 100;
+  return Math.round(((now-start)/(end-start))*100);
+}
+
+/* ---------------- Homework ---------------- */
+function Homework({data, update, openModal}){
+  const [view, setView] = useState('week');
+  const [subjFilter, setSubjFilter] = useState('all');
+  const today = todayISO();
+
+  let list = data.homework.filter(h=> subjFilter==='all' || h.subject===subjFilter);
+  list = list.filter(h=>{
+    const d = daysBetween(today, h.dueDate);
+    if(view==='today') return d===0 && h.status!=='completed';
+    if(view==='tomorrow') return d===1 && h.status!=='completed';
+    if(view==='week') return d>=0 && d<=7 && h.status!=='completed';
+    if(view==='overdue') return d<0 && h.status!=='completed';
+    if(view==='completed') return h.status==='completed';
+    return true;
+  }).sort((a,b)=> a.dueDate.localeCompare(b.dueDate));
+
+  const setStatus = (id, status) => update(d=>{ const h=d.homework.find(x=>x.id===id); if(h) h.status=status; });
+  const remove = (id) => update(d=>{ d.homework = d.homework.filter(x=>x.id!==id); });
+
+  return <div className="fade-in">
+    <PageHeader title="Homework" action={()=>openModal({type:'homework'})} actionLabel="+ Add homework"/>
+    <div style={{display:'flex', gap:8, marginBottom:14, flexWrap:'wrap'}}>
+      {[['today','Today'],['tomorrow','Tomorrow'],['week','This Week'],['overdue','Overdue'],['completed','Completed'],['all','All']].map(([k,l])=>(
+        <button key={k} onClick={()=>setView(k)} className="btn-ghost" style={{background: view===k?'var(--blue-dim)':'transparent', borderColor: view===k?'var(--blue)':'var(--border)', color: view===k?'#C9D8FF':'var(--text-dim)'}}>{l}</button>
+      ))}
+      <div style={{marginLeft:'auto'}}>
+        <select value={subjFilter} onChange={e=>setSubjFilter(e.target.value)}>
+          <option value="all">All subjects</option>
+          {SUBJECTS.map(s=><option key={s.key} value={s.key}>{s.emoji} {s.label}</option>)}
+        </select>
+      </div>
+    </div>
+    <div className="card" style={{padding:6}}>
+      {list.length===0 && <EmptyState icon="📚" text="No homework here."/>}
+      {list.map(h=>{
+        const days = daysBetween(today, h.dueDate);
+        const s = subjInfo(h.subject);
+        return <div key={h.id} style={{display:'flex', alignItems:'center', gap:12, padding:'12px 12px', borderBottom:'1px solid var(--border-soft)'}}>
+          <input type="checkbox" checked={h.status==='completed'} onChange={()=>setStatus(h.id, h.status==='completed'?'not_started':'completed')} style={{width:16, height:16, accentColor:'var(--green)'}}/>
+          <div style={{width:3, alignSelf:'stretch', background:s.color, borderRadius:3}}/>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13.5, fontWeight:500, textDecoration: h.status==='completed'?'line-through':'none', color: h.status==='completed'?'var(--text-faint)':'var(--text)'}}>{s.emoji} {h.name}</div>
+            <div style={{fontSize:11.5, color:'var(--text-faint)'}}>{h.teacher?h.teacher+' · ':''}{fmtDate(h.dueDate)}{days<0 && h.status!=='completed' ? ' · Overdue':''}{h.estMinutes?` · ${h.estMinutes} min`:''}</div>
+          </div>
+          <Chip color={PRIORITIES[h.priority]?.color}>{PRIORITIES[h.priority]?.label}</Chip>
+          <select value={h.status} onChange={e=>setStatus(h.id, e.target.value)} style={{fontSize:12}}>
+            {Object.entries(STATUSES).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+          </select>
+          <button onClick={()=>remove(h.id)} className="btn-ghost" style={{padding:'4px 8px'}}>✕</button>
+        </div>;
+      })}
+    </div>
+  </div>;
+}
+function PageHeader({title, action, actionLabel}){
+  return <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18}}>
+    <div className="display" style={{fontSize:23, fontWeight:600}}>{title}</div>
+    {action && <button onClick={action} className="btn-primary">{actionLabel}</button>}
+  </div>;
+}
+
+/* ---------------- Calendar ---------------- */
+function CalendarPage({data}){
+  const [cursor, setCursor] = useState(()=>{ const d=new Date(); return {y:d.getFullYear(), m:d.getMonth()}; });
+  const [selected, setSelected] = useState(todayISO());
+
+  const itemsByDate = useMemo(()=>{
+    const map = {};
+    const push = (date, item) => { if(!date) return; (map[date] = map[date]||[]).push(item); };
+    data.homework.forEach(h=>push(h.dueDate, {emoji:subjInfo(h.subject).emoji, label:h.name, color:subjInfo(h.subject).color}));
+    data.exams.forEach(e=>push(e.date, {emoji:'📝', label:e.name, color:'var(--red)'}));
+    data.study.forEach(s=>push(s.date, {emoji:'📖', label:s.topic||subjInfo(s.subject).label, color:'var(--text-faint)'}));
+    data.milestones.forEach(m=>push(m.date, {emoji:m.emoji||'🗓️', label:m.name, color:'var(--violet)'}));
+    return map;
+  },[data]);
+
+  const first = new Date(cursor.y, cursor.m, 1);
+  const startOffset = (first.getDay()+6)%7; // Monday-first
+  const daysInMonth = new Date(cursor.y, cursor.m+1, 0).getDate();
+  const cells = [];
+  for(let i=0;i<startOffset;i++) cells.push(null);
+  for(let d=1; d<=daysInMonth; d++) cells.push(d);
+
+  const monthLabel = first.toLocaleDateString('en-US',{month:'long', year:'numeric'});
+
+  return <div className="fade-in">
+    <PageHeader title="Calendar"/>
+    <div style={{display:'grid', gridTemplateColumns:'1fr 300px', gap:20}}>
+      <div className="card" style={{padding:18}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14}}>
+          <button className="btn-ghost" onClick={()=>setCursor(c=>{ let m=c.m-1,y=c.y; if(m<0){m=11;y--;} return {y,m}; })}>‹</button>
+          <div style={{fontWeight:600, fontSize:15}}>{monthLabel}</div>
+          <button className="btn-ghost" onClick={()=>setCursor(c=>{ let m=c.m+1,y=c.y; if(m>11){m=0;y++;} return {y,m}; })}>›</button>
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:6, fontSize:11, color:'var(--text-faint)', marginBottom:6}}>
+          {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=><div key={d} style={{textAlign:'center'}}>{d}</div>)}
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:6}}>
+          {cells.map((d,i)=>{
+            if(d===null) return <div key={i}/>;
+            const iso = `${cursor.y}-${String(cursor.m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const items = itemsByDate[iso]||[];
+            const isToday = iso===todayISO();
+            return <div key={i} onClick={()=>setSelected(iso)} style={{minHeight:64, borderRadius:9, padding:6, cursor:'pointer', background: selected===iso?'var(--card-hi)':'var(--bg-elev)', border: isToday?'1px solid var(--blue)':'1px solid transparent'}}>
+              <div style={{fontSize:11.5, color: isToday?'var(--blue)':'var(--text-dim)', fontWeight: isToday?700:400, marginBottom:4}}>{d}</div>
+              <div style={{display:'flex', flexWrap:'wrap', gap:3}}>
+                {items.slice(0,3).map((it,ix)=><span key={ix} style={{fontSize:10}}>{it.emoji}</span>)}
+                {items.length>3 && <span style={{fontSize:9, color:'var(--text-faint)'}}>+{items.length-3}</span>}
+              </div>
+            </div>;
+          })}
+        </div>
+      </div>
+      <div className="card" style={{padding:16, alignSelf:'start'}}>
+        <div style={{fontWeight:600, fontSize:13, marginBottom:10}}>{fmtDate(selected)}</div>
+        {(itemsByDate[selected]||[]).length===0 && <EmptyState icon="🗓️" text="Nothing scheduled."/>}
+        {(itemsByDate[selected]||[]).map((it,ix)=>(
+          <div key={ix} style={{display:'flex', gap:8, alignItems:'center', padding:'8px 0', borderBottom:'1px solid var(--border-soft)'}}>
+            <span>{it.emoji}</span><span style={{fontSize:12.5}}>{it.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------------- Exams ---------------- */
+function Exams({data, update, openModal}){
+  const today = todayISO();
+  const toggleTopic = (examId, ti) => update(d=>{
+    const e = d.exams.find(x=>x.id===examId); if(!e) return;
+    e.topics[ti].done = !e.topics[ti].done;
+    e.prepPercent = Math.round((e.topics.filter(t=>t.done).length / Math.max(1,e.topics.length))*100);
+  });
+  const remove = (id) => update(d=>{ d.exams = d.exams.filter(x=>x.id!==id); });
+  const sorted = [...data.exams].sort((a,b)=>a.date.localeCompare(b.date));
+
+  return <div className="fade-in">
+    <PageHeader title="Exams" action={()=>openModal({type:'exam'})} actionLabel="+ Add exam"/>
+    {sorted.length===0 && <EmptyState icon="📝" text="No exams tracked yet."/>}
+    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16}}>
+      {sorted.map(e=>{
+        const s = subjInfo(e.subject);
+        const days = daysBetween(today, e.date);
+        return <div key={e.id} className="card" style={{padding:18}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+            <div>
+              <div style={{fontSize:15, fontWeight:600}}>{s.emoji} {e.name}</div>
+              <div style={{fontSize:11.5, color:'var(--text-faint)', marginTop:2}}>{fmtDate(e.date)} · {days>=0?`in ${days} days`:'past'}</div>
+            </div>
+            <button onClick={()=>remove(e.id)} className="btn-ghost" style={{padding:'4px 8px'}}>✕</button>
+          </div>
+          <div style={{margin:'14px 0 8px'}}>
+            <div style={{display:'flex', justifyContent:'space-between', fontSize:11.5, color:'var(--text-dim)', marginBottom:5}}>
+              <span>Preparation</span><span>{e.prepPercent||0}%</span>
+            </div>
+            <Bar pct={e.prepPercent||0} color={s.color}/>
+          </div>
+          <div style={{display:'flex', flexDirection:'column', gap:5, marginTop:10}}>
+            {(e.topics||[]).map((t,ti)=>(
+              <label key={ti} style={{display:'flex', alignItems:'center', gap:8, fontSize:12.5, color: t.done?'var(--text-faint)':'var(--text-dim)'}}>
+                <input type="checkbox" checked={t.done} onChange={()=>toggleTopic(e.id, ti)} style={{accentColor:'var(--green)'}}/>
+                <span style={{textDecoration: t.done?'line-through':'none'}}>{t.name}</span>
+              </label>
+            ))}
+          </div>
+          <div style={{display:'flex', gap:14, marginTop:14, fontSize:11.5, color:'var(--text-faint)'}}>
+            <span>Difficulty: {e.difficulty}</span><span>Target: {e.targetGrade}%</span>
+          </div>
+        </div>;
+      })}
+    </div>
+  </div>;
+}
+
+/* ---------------- Study ---------------- */
+function Study({data, update, openModal}){
+  const today = todayISO();
+  const weekStart = startOfWeek(today);
+  const thisWeek = data.study.filter(s=>s.date>=weekStart);
+  const bySubject = {};
+  thisWeek.forEach(s=>{ bySubject[s.subject] = (bySubject[s.subject]||0) + Number(s.durationMinutes||0); });
+  const totalMins = thisWeek.reduce((a,s)=>a+Number(s.durationMinutes||0),0);
+  const maxMins = Math.max(60, ...Object.values(bySubject));
+  const remove = (id) => update(d=>{ d.study = d.study.filter(x=>x.id!==id); });
+  const recent = [...data.study].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,12);
+
+  return <div className="fade-in">
+    <PageHeader title="Study" action={()=>openModal({type:'study'})} actionLabel="+ Log session"/>
+    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:20}}>
+      <div className="card" style={{padding:18}}>
+        <div style={{fontSize:12.5, color:'var(--text-dim)', marginBottom:14, fontWeight:600}}>This week by subject</div>
+        {SUBJECTS.filter(s=>s.key!=='other' || bySubject.other).map(s=>{
+          const mins = bySubject[s.key]||0;
+          return <div key={s.key} style={{display:'flex', alignItems:'center', gap:10, marginBottom:10}}>
+            <div style={{width:82, fontSize:12}}>{s.emoji} {s.label}</div>
+            <div style={{flex:1}}><Bar pct={(mins/maxMins)*100} color={s.color}/></div>
+            <div style={{width:56, fontSize:11.5, color:'var(--text-dim)', textAlign:'right'}}>{fmtMins(mins)}</div>
+          </div>;
+        })}
+        <div style={{marginTop:12, paddingTop:12, borderTop:'1px solid var(--border-soft)', display:'flex', justifyContent:'space-between'}}>
+          <span style={{fontSize:12.5, color:'var(--text-dim)'}}>Total</span>
+          <span style={{fontSize:14, fontWeight:600}}>{fmtMins(totalMins)}</span>
+        </div>
+      </div>
+      <div className="card" style={{padding:18}}>
+        <div style={{fontSize:12.5, color:'var(--text-dim)', marginBottom:12, fontWeight:600}}>Recent sessions</div>
+        {recent.length===0 && <EmptyState icon="📖" text="No sessions logged yet."/>}
+        {recent.map(s=>(
+          <div key={s.id} style={{display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom:'1px solid var(--border-soft)'}}>
+            <span>{subjInfo(s.subject).emoji}</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:12.5}}>{s.topic || subjInfo(s.subject).label}</div>
+              <div style={{fontSize:11, color:'var(--text-faint)'}}>{fmtDate(s.date)} · {s.method} · {s.durationMinutes} min</div>
+            </div>
+            <button onClick={()=>remove(s.id)} className="btn-ghost" style={{padding:'3px 8px'}}>✕</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>;
+}
+
+/* ---------------- Grades ---------------- */
+function Grades({data, update, openModal}){
+  const remove = (id) => update(d=>{ d.grades = d.grades.filter(x=>x.id!==id); });
+  return <div className="fade-in">
+    <PageHeader title="Grades" action={()=>openModal({type:'grade'})} actionLabel="+ Add grade"/>
+    <div style={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:16, marginBottom:20}}>
+      {SUBJECTS.filter(s=>s.key!=='other').map(s=>{
+        const list = data.grades.filter(g=>g.subject===s.key);
+        const avg = weightedAverage(list);
+        const target = 95;
+        return <div key={s.key} className="card" style={{padding:18}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10}}>
+            <div style={{fontSize:14, fontWeight:600}}>{s.emoji} {s.label}</div>
+            <span style={{fontSize:11, color:'var(--text-faint)'}}>{list.length} assessments</span>
+          </div>
+          <div style={{display:'flex', gap:20, alignItems:'baseline'}}>
+            <div>
+              <div className="display" style={{fontSize:26, fontWeight:600, color:s.color}}>{avg!=null?`${avg.toFixed(1)}%`:'—'}</div>
+              <div style={{fontSize:10.5, color:'var(--text-faint)'}}>current</div>
+            </div>
+            <div>
+              <div style={{fontSize:15, fontWeight:600, color:'var(--text-dim)'}}>{target}%</div>
+              <div style={{fontSize:10.5, color:'var(--text-faint)'}}>target</div>
+            </div>
+            {avg!=null && <div style={{fontSize:11.5, color: avg>=target?'var(--green)':'var(--amber)'}}>{avg>=target?'On target':`+${(target-avg).toFixed(1)}% needed`}</div>}
+          </div>
+          <div style={{marginTop:12}}><Bar pct={avg||0} color={s.color}/></div>
+        </div>;
+      })}
+    </div>
+    <div className="card" style={{padding:6}}>
+      {data.grades.length===0 && <EmptyState icon="📊" text="No grades recorded yet."/>}
+      {[...data.grades].sort((a,b)=>b.date.localeCompare(a.date)).map(g=>(
+        <div key={g.id} style={{display:'flex', alignItems:'center', gap:12, padding:'10px 12px', borderBottom:'1px solid var(--border-soft)'}}>
+          <span>{subjInfo(g.subject).emoji}</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:12.5}}>{g.assessment}</div>
+            <div style={{fontSize:11, color:'var(--text-faint)'}}>{fmtDate(g.date)} · {g.term} · weight {g.weight}</div>
+          </div>
+          <div style={{fontSize:13, fontWeight:600}}>{g.grade}/{g.maxGrade}</div>
+          <button onClick={()=>remove(g.id)} className="btn-ghost" style={{padding:'3px 8px'}}>✕</button>
+        </div>
+      ))}
+    </div>
+  </div>;
+}
+
+/* ---------------- Goals ---------------- */
+function Goals({data, update}){
+  const [monthTab, setMonthTab] = useState(currentSeniorMonth());
+  const [newYear, setNewYear] = useState('');
+  const [newMonth, setNewMonth] = useState('');
+  const [newWeek, setNewWeek] = useState('');
+
+  const toggle = (arrPath, id) => update(d=>{
+    let arr;
+    if(arrPath==='year') arr = d.goals.year;
+    else if(arrPath==='weekly') arr = d.goals.weekly;
+    else arr = (d.goals.monthly[monthTab] = d.goals.monthly[monthTab]||[]);
+    const g = arr.find(x=>x.id===id); if(g) g.done=!g.done;
+  });
+  const addGoal = (scope, text) => { if(!text.trim()) return; update(d=>{
+    if(scope==='year') d.goals.year.push({id:uid(), text, done:false});
+    else if(scope==='weekly') d.goals.weekly.push({id:uid(), text, done:false});
+    else { d.goals.monthly[monthTab] = d.goals.monthly[monthTab]||[]; d.goals.monthly[monthTab].push({id:uid(), text, done:false}); }
+  }); };
+  const removeGoal = (scope, id) => update(d=>{
+    if(scope==='year') d.goals.year = d.goals.year.filter(x=>x.id!==id);
+    else if(scope==='weekly') d.goals.weekly = d.goals.weekly.filter(x=>x.id!==id);
+    else d.goals.monthly[monthTab] = (d.goals.monthly[monthTab]||[]).filter(x=>x.id!==id);
+  });
+
+  const GoalList = ({items, scope, empty}) => <div>
+    {items.length===0 && <div style={{fontSize:12, color:'var(--text-faint)', padding:'10px 0'}}>{empty}</div>}
+    {items.map(g=>(
+      <div key={g.id} style={{display:'flex', alignItems:'center', gap:10, padding:'7px 0'}}>
+        <input type="checkbox" checked={g.done} onChange={()=>toggle(scope, g.id)} style={{accentColor:'var(--green)'}}/>
+        <span style={{fontSize:13, flex:1, textDecoration:g.done?'line-through':'none', color:g.done?'var(--text-faint)':'var(--text)'}}>{g.text}</span>
+        <button onClick={()=>removeGoal(scope,g.id)} className="btn-ghost" style={{padding:'2px 7px'}}>✕</button>
+      </div>
+    ))}
+  </div>;
+
+  const monthGoals = data.goals.monthly[monthTab] || [];
+
+  return <div className="fade-in">
+    <PageHeader title="Goals"/>
+    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:16}}>
+      <div className="card" style={{padding:16}}>
+        <div style={{fontSize:12.5, fontWeight:600, color:'var(--text-dim)', marginBottom:8}}>Year goals</div>
+        <GoalList items={data.goals.year} scope="year" empty="No year goals yet."/>
+        <AddInline value={newYear} setValue={setNewYear} onAdd={()=>{addGoal('year',newYear); setNewYear('');}} placeholder="Add a year goal…"/>
+      </div>
+      <div className="card" style={{padding:16}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
+          <div style={{fontSize:12.5, fontWeight:600, color:'var(--text-dim)'}}>Monthly goals</div>
+          <select value={monthTab} onChange={e=>setMonthTab(e.target.value)} style={{fontSize:11.5}}>
+            {MONTHS.map(m=><option key={m} value={m}>{m}</option>)}
+          </select>
+        </div>
+        <GoalList items={monthGoals} scope="monthly" empty="No goals for this month yet."/>
+        <AddInline value={newMonth} setValue={setNewMonth} onAdd={()=>{addGoal('monthly',newMonth); setNewMonth('');}} placeholder={`Add a goal for ${monthTab}…`}/>
+      </div>
+      <div className="card" style={{padding:16}}>
+        <div style={{fontSize:12.5, fontWeight:600, color:'var(--text-dim)', marginBottom:8}}>This week</div>
+        <GoalList items={data.goals.weekly} scope="weekly" empty="No weekly priorities set."/>
+        <AddInline value={newWeek} setValue={setNewWeek} onAdd={()=>{addGoal('weekly',newWeek); setNewWeek('');}} placeholder="Add a weekly priority…"/>
+      </div>
+    </div>
+  </div>;
+}
+function AddInline({value, setValue, onAdd, placeholder}){
+  return <div style={{display:'flex', gap:6, marginTop:10}}>
+    <input value={value} onChange={e=>setValue(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') onAdd();}} placeholder={placeholder} style={{flex:1, fontSize:12}}/>
+    <button onClick={onAdd} className="btn-ghost" style={{padding:'6px 10px'}}>Add</button>
+  </div>;
+}
+
+/* ---------------- IELTS ---------------- */
+function Ielts({data, update, openModal}){
+  const i = data.ielts;
+  const avg = ((i.current.listening+i.current.reading+i.current.writing+i.current.speaking)/4);
+  const daysLeft = i.examDate ? daysBetween(todayISO(), i.examDate) : null;
+  const setSkill = (skill, val) => update(d=>{ d.ielts.current[skill] = Number(val); });
+  const removeSession = (id) => update(d=>{ d.ielts.sessions = d.ielts.sessions.filter(x=>x.id!==id); });
+  const removeMock = (id) => update(d=>{ d.ielts.mockTests = d.ielts.mockTests.filter(x=>x.id!==id); });
+  const totalHrs = i.sessions.reduce((a,s)=>a+Number(s.durationMinutes||0),0)/60;
+  const bestMock = i.mockTests.length ? Math.max(...i.mockTests.map(m=>Number(m.overall))) : null;
+  const avgMock = i.mockTests.length ? (i.mockTests.reduce((a,m)=>a+Number(m.overall),0)/i.mockTests.length) : null;
+
+  return <div className="fade-in">
+    <PageHeader title="IELTS" action={()=>openModal({type:'ielts'})} actionLabel="+ Log session"/>
+    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:20}}>
+      <div className="card" style={{padding:18}}>
+        <div style={{display:'flex', justifyContent:'space-between', marginBottom:16}}>
+          <div>
+            <div style={{fontSize:11, color:'var(--text-faint)'}}>Current estimate</div>
+            <div className="display" style={{fontSize:28, fontWeight:600}}>{avg.toFixed(1)}</div>
+          </div>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontSize:11, color:'var(--text-faint)'}}>Target</div>
+            <div className="display" style={{fontSize:28, fontWeight:600, color:'var(--green)'}}>{i.target}</div>
+          </div>
+        </div>
+        {['listening','reading','writing','speaking'].map(skill=>(
+          <div key={skill} style={{display:'flex', alignItems:'center', gap:10, marginBottom:9}}>
+            <div style={{width:80, fontSize:12, textTransform:'capitalize'}}>{skill}</div>
+            <div style={{flex:1}}><Bar pct={(i.current[skill]/9)*100} color="var(--blue)"/></div>
+            <input type="number" step="0.5" min="0" max="9" value={i.current[skill]} onChange={e=>setSkill(skill,e.target.value)} style={{width:52, fontSize:12, padding:'4px 6px'}}/>
+          </div>
+        ))}
+        <div style={{marginTop:14, padding:'12px 14px', background:'var(--bg-elev)', borderRadius:10, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+          <div style={{fontSize:12, color:'var(--text-dim)'}}>Exam date</div>
+          <input type="date" value={i.examDate||''} onChange={e=>update(d=>{d.ielts.examDate=e.target.value;})} style={{fontSize:12}}/>
+        </div>
+        {daysLeft!=null && <div style={{textAlign:'center', marginTop:12}}>
+          {daysLeft>=0 ? <><div className="display" style={{fontSize:24, fontWeight:600}}>{daysLeft} days</div><div style={{fontSize:11, color:'var(--text-faint)'}}>until IELTS exam</div></>
+            : <Chip color="var(--green)">✅ IELTS completed</Chip>}
+        </div>}
+      </div>
+      <div>
+        <div className="card" style={{padding:18, marginBottom:16}}>
+          <div style={{fontSize:12.5, fontWeight:600, color:'var(--text-dim)', marginBottom:10}}>Progress</div>
+          <div style={{display:'flex', gap:16}}>
+            <MiniStat label="Study hours" value={totalHrs.toFixed(1)}/>
+            <MiniStat label="Mock tests" value={i.mockTests.length}/>
+            <MiniStat label="Avg mock" value={avgMock!=null?avgMock.toFixed(1):'—'}/>
+            <MiniStat label="Best" value={bestMock!=null?bestMock.toFixed(1):'—'}/>
+          </div>
+        </div>
+        <div className="card" style={{padding:18}}>
+          <div style={{fontSize:12.5, fontWeight:600, color:'var(--text-dim)', marginBottom:10}}>Recent sessions</div>
+          {i.sessions.length===0 && <EmptyState icon="🇬🇧" text="No IELTS sessions logged yet."/>}
+          {[...i.sessions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8).map(s=>(
+            <div key={s.id} style={{display:'flex', alignItems:'center', gap:10, padding:'7px 0', borderBottom:'1px solid var(--border-soft)'}}>
+              <div style={{flex:1, fontSize:12}}>{s.skill} · {fmtDate(s.date)} · {s.durationMinutes} min</div>
+              <button onClick={()=>removeSession(s.id)} className="btn-ghost" style={{padding:'2px 7px'}}>✕</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>;
+}
+function MiniStat({label, value}){
+  return <div style={{flex:1}}>
+    <div className="display" style={{fontSize:19, fontWeight:600}}>{value}</div>
+    <div style={{fontSize:10.5, color:'var(--text-faint)'}}>{label}</div>
+  </div>;
+}
+
+/* ---------------- Medicine ---------------- */
+function Medicine({data, update, openModal}){
+  const m = data.medicine;
+  const decide = (type, id) => update(d=>{
+    if(type==='country') d.medicine.decidedCountry = d.medicine.countries.find(c=>c.id===id) || null;
+    else d.medicine.decidedUniversity = d.medicine.universities.find(u=>u.id===id) || null;
+  });
+  const removeCountry = (id) => update(d=>{ d.medicine.countries = d.medicine.countries.filter(c=>c.id!==id); if(d.medicine.decidedCountry?.id===id) d.medicine.decidedCountry=null; });
+  const removeUni = (id) => update(d=>{ d.medicine.universities = d.medicine.universities.filter(u=>u.id!==id); if(d.medicine.decidedUniversity?.id===id) d.medicine.decidedUniversity=null; });
+
+  return <div className="fade-in">
+    <PageHeader title="Medicine Plan"/>
+    {m.decidedCountry || m.decidedUniversity ? (
+      <div className="card" style={{padding:20, marginBottom:20, borderLeft:'3px solid var(--green)'}}>
+        <div style={{fontSize:11, color:'var(--text-faint)', marginBottom:6}}>TARGET</div>
+        <div style={{display:'flex', gap:24}}>
+          {m.decidedCountry && <div><div className="display" style={{fontSize:20, fontWeight:600}}>{m.decidedCountry.flag} {m.decidedCountry.name}</div><div style={{fontSize:11, color:'var(--text-faint)'}}>country</div></div>}
+          {m.decidedUniversity && <div><div className="display" style={{fontSize:20, fontWeight:600}}>🩺 {m.decidedUniversity.name}</div><div style={{fontSize:11, color:'var(--text-faint)'}}>university · medicine</div></div>}
+        </div>
+      </div>
+    ) : (
+      <div className="card" style={{padding:20, marginBottom:20, color:'var(--text-dim)', fontSize:13.5}}>
+        "I haven't chosen yet." Country: <b style={{color:'var(--text)'}}>Undecided</b> · University: <b style={{color:'var(--text)'}}>Undecided</b>
+      </div>
+    )}
+
+    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10}}>
+      <SectionTitle style={{marginBottom:0}}>Country research</SectionTitle>
+      <button onClick={()=>openModal({type:'country'})} className="btn-ghost">+ Add country</button>
+    </div>
+    <div style={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:14, marginBottom:24}}>
+      {m.countries.length===0 && <EmptyState icon="🌍" text="No countries added yet."/>}
+      {m.countries.map(c=>(
+        <div key={c.id} className="card" style={{padding:16, border: m.decidedCountry?.id===c.id ? '1px solid var(--green)':'1px solid var(--border-soft)'}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+            <div style={{fontSize:14, fontWeight:600}}>{c.flag} {c.name}</div>
+            <div style={{display:'flex', gap:6}}>
+              <button onClick={()=>decide('country', c.id)} className="btn-ghost" style={{padding:'3px 8px', fontSize:11}}>{m.decidedCountry?.id===c.id?'★ Target':'Set target'}</button>
+              <button onClick={()=>removeCountry(c.id)} className="btn-ghost" style={{padding:'3px 8px'}}>✕</button>
+            </div>
+          </div>
+          <div style={{fontSize:11.5, color:'var(--text-dim)', marginTop:8, lineHeight:1.6}}>
+            {c.tuition && <div>Tuition: {c.tuition}</div>}
+            {c.length && <div>Length: {c.length}</div>}
+            {c.language && <div>Language: {c.language}</div>}
+          </div>
+          {c.score!=null && <div style={{marginTop:10}}>
+            <div style={{display:'flex', justifyContent:'space-between', fontSize:10.5, color:'var(--text-faint)', marginBottom:3}}><span>Personal score</span><span>{c.score}/10</span></div>
+            <Bar pct={c.score*10} color="var(--violet)"/>
+          </div>}
+        </div>
+      ))}
+    </div>
+    <div style={{fontSize:10.5, color:'var(--text-faint)', marginTop:-14, marginBottom:20}}>Scores are a personal comparison tool only — they don't predict admission or career outcomes.</div>
+
+    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10}}>
+      <SectionTitle style={{marginBottom:0}}>Universities</SectionTitle>
+      <button onClick={()=>openModal({type:'university'})} className="btn-ghost">+ Add university</button>
+    </div>
+    <div className="card" style={{padding:6}}>
+      {m.universities.length===0 && <EmptyState icon="🩺" text="No universities added yet."/>}
+      {m.universities.map(u=>(
+        <div key={u.id} style={{display:'flex', alignItems:'center', gap:12, padding:'10px 12px', borderBottom:'1px solid var(--border-soft)'}}>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13, fontWeight:500}}>{u.name} {m.decidedUniversity?.id===u.id && <span style={{color:'var(--green)'}}>★</span>}</div>
+            <div style={{fontSize:11, color:'var(--text-faint)'}}>{u.country} · {u.location} · deadline {u.deadline||'—'}</div>
+          </div>
+          <button onClick={()=>decide('university', u.id)} className="btn-ghost" style={{padding:'3px 8px', fontSize:11}}>Set target</button>
+          {u.website && <a href={u.website} target="_blank" className="btn-ghost" style={{padding:'3px 8px', fontSize:11, textDecoration:'none'}}>Site ↗</a>}
+          <button onClick={()=>removeUni(u.id)} className="btn-ghost" style={{padding:'3px 8px'}}>✕</button>
+        </div>
+      ))}
+    </div>
+  </div>;
+}
+
+/* ---------------- Timeline ---------------- */
+function Timeline({data, update}){
+  const grad = data.settings.graduation;
+  const daysToGrad = daysBetween(todayISO(), grad);
+  const setMilestoneDate = (id, date) => update(d=>{ const m=d.milestones.find(x=>x.id===id); if(m) m.date=date; });
+  const toggleMilestone = (id) => update(d=>{ const m=d.milestones.find(x=>x.id===id); if(m) m.done=!m.done; });
+
+  return <div className="fade-in">
+    <PageHeader title="Timeline"/>
+    <div className="card" style={{padding:'16px 20px', marginBottom:22, display:'flex', gap:36}}>
+      <MiniStat label="Days to graduation" value={daysToGrad}/>
+      <MiniStat label="Homework completion" value={pctDone(data.homework)}/>
+      <MiniStat label="Average grade" value={(weightedAverage(data.grades)||0).toFixed(1)+'%'}/>
+      <MiniStat label="Study hours (total)" value={(data.study.reduce((a,s)=>a+Number(s.durationMinutes||0),0)/60).toFixed(0)+'h'}/>
+    </div>
+
+    <SectionTitle>Month by month</SectionTitle>
+    <div style={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:14, marginBottom:26}}>
+      {MONTHS.map(m=>{
+        const f = MONTH_FOCUS[m];
+        const pct = monthProgress(m);
+        const isCurrent = m===currentSeniorMonth();
+        return <div key={m} className="card" style={{padding:16, border: isCurrent ? '1px solid var(--blue)':'1px solid var(--border-soft)'}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
+            <div style={{fontWeight:600, fontSize:13.5}}>{m}</div>
+            <span style={{fontSize:11, color:'var(--text-faint)'}}>{f.title}</span>
+          </div>
+          <Bar pct={pct} color={isCurrent?'var(--blue)':'var(--border)'}/>
+          <ul style={{margin:'10px 0 0', paddingLeft:16, fontSize:11.5, color:'var(--text-dim)', lineHeight:1.7}}>
+            {f.points.map((p,ix)=><li key={ix}>{p}</li>)}
+          </ul>
+        </div>;
+      })}
+    </div>
+
+    <SectionTitle>Milestones</SectionTitle>
+    <div className="card" style={{padding:6}}>
+      {[...data.milestones].sort((a,b)=>a.date.localeCompare(b.date)).map(m=>(
+        <div key={m.id} style={{display:'flex', alignItems:'center', gap:12, padding:'10px 12px', borderBottom:'1px solid var(--border-soft)'}}>
+          <input type="checkbox" checked={m.done} onChange={()=>toggleMilestone(m.id)} style={{accentColor:'var(--green)'}}/>
+          <span>{m.emoji}</span>
+          <div style={{flex:1, fontSize:12.5, textDecoration:m.done?'line-through':'none', color:m.done?'var(--text-faint)':'var(--text)'}}>{m.name}</div>
+          <input type="date" value={m.date} onChange={e=>setMilestoneDate(m.id, e.target.value)} style={{fontSize:11.5}}/>
+        </div>
+      ))}
+    </div>
+  </div>;
+}
+function pctDone(homework){
+  if(!homework.length) return '—';
+  const done = homework.filter(h=>h.status==='completed').length;
+  return Math.round((done/homework.length)*100)+'%';
+}
+
+/* ---------------- Settings ---------------- */
+function Settings({data, update}){
+  const s = data.settings;
+  const set = (k,v) => update(d=>{ d.settings[k]=v; });
+  const resetAll = () => { if(confirm('Reset all Senior OS data? This cannot be undone.')) { update(d=>{ Object.assign(d, defaultData()); }); } };
+  return <div className="fade-in">
+    <PageHeader title="Settings"/>
+    <div className="card" style={{padding:20, maxWidth:440}}>
+      <Field label="Name"><input value={s.name} onChange={e=>set('name', e.target.value)} style={{width:'100%'}}/></Field>
+      <Field label="Senior Year start"><input type="date" value={s.yearStart} onChange={e=>set('yearStart', e.target.value)} style={{width:'100%'}}/></Field>
+      <Field label="Graduation date"><input type="date" value={s.graduation} onChange={e=>set('graduation', e.target.value)} style={{width:'100%'}}/></Field>
+      <div style={{marginTop:18, paddingTop:18, borderTop:'1px solid var(--border-soft)'}}>
+        <button onClick={resetAll} className="btn-ghost" style={{borderColor:'var(--red)', color:'var(--red)'}}>Reset all data</button>
+      </div>
+    </div>
+    <div style={{fontSize:11.5, color:'var(--text-faint)', marginTop:16, maxWidth:440}}>Your data is stored privately and persists automatically — no account setup needed.</div>
+  </div>;
+}
+
+/* ---------------- Quick add / edit modal ---------------- */
+function QuickModal({modal, data, update, onClose}){
+  const {type} = modal;
+  const [form, setForm] = useState(()=>defaultForm(type));
+  const set = (k,v)=>setForm(f=>({...f,[k]:v}));
+
+  const save = () => {
+    update(d=>{
+      if(type==='homework') d.homework.push({id:uid(), subject:form.subject, name:form.name, teacher:form.teacher, description:form.description, assignedDate:form.assignedDate||todayISO(), dueDate:form.dueDate||todayISO(), estMinutes:Number(form.estMinutes)||30, priority:form.priority, status:'not_started', notes:form.notes});
+      if(type==='exam') d.exams.push({id:uid(), subject:form.subject, name:form.name, date:form.date||todayISO(), difficulty:form.difficulty, prepPercent:0, targetGrade:form.targetGrade||95, topics:(form.topics||'').split(',').map(t=>t.trim()).filter(Boolean).map(t=>({name:t, done:false}))});
+      if(type==='study') d.study.push({id:uid(), subject:form.subject, topic:form.topic, date:form.date||todayISO(), startTime:form.startTime, durationMinutes:Number(form.durationMinutes)||30, method:form.method, notes:form.notes});
+      if(type==='grade') d.grades.push({id:uid(), subject:form.subject, assessment:form.assessment, date:form.date||todayISO(), grade:Number(form.grade)||0, maxGrade:Number(form.maxGrade)||100, weight:Number(form.weight)||1, term:form.term, notes:form.notes});
+      if(type==='goal') d.goals.year.push({id:uid(), text:form.text, done:false});
+      if(type==='ielts') d.ielts.sessions.push({id:uid(), skill:form.skill, date:form.date||todayISO(), durationMinutes:Number(form.durationMinutes)||30, notes:form.notes});
+      if(type==='country'){ const lib = COUNTRY_LIB.find(c=>c.name===form.name); d.medicine.countries.push({id:uid(), name:form.name, flag: lib?lib.flag:'🌍', tuition:form.tuition, length:form.length, language:form.language, score:Number(form.score)||5}); }
+      if(type==='university') d.medicine.universities.push({id:uid(), name:form.name, country:form.country, location:form.location, deadline:form.deadline, website:form.website});
+      if(type==='event') d.milestones.push({id:uid(), name:form.name, date:form.date||todayISO(), emoji:'🗓️', done:false});
+    });
+    onClose();
+  };
+
+  const titles = {homework:'Add homework', exam:'Add exam', study:'Log study session', grade:'Add grade', goal:'Add goal', ielts:'Log IELTS session', country:'Add country', university:'Add university', event:'Add important event'};
+
+  return <Modal title={titles[type]||'Add'} onClose={onClose}>
+    {type==='homework' && <>
+      <Field label="Subject"><SubjectSelect value={form.subject} onChange={v=>set('subject',v)}/></Field>
+      <Field label="Assignment name"><input style={{width:'100%'}} value={form.name} onChange={e=>set('name',e.target.value)}/></Field>
+      <Field label="Teacher"><input style={{width:'100%'}} value={form.teacher} onChange={e=>set('teacher',e.target.value)}/></Field>
+      <div style={{display:'flex', gap:10}}>
+        <Field label="Due date"><input type="date" value={form.dueDate} onChange={e=>set('dueDate',e.target.value)}/></Field>
+        <Field label="Est. minutes"><input type="number" value={form.estMinutes} onChange={e=>set('estMinutes',e.target.value)}/></Field>
+      </div>
+      <Field label="Priority"><PrioritySelect value={form.priority} onChange={v=>set('priority',v)}/></Field>
+      <Field label="Notes"><textarea style={{width:'100%'}} rows={2} value={form.notes} onChange={e=>set('notes',e.target.value)}/></Field>
+    </>}
+    {type==='exam' && <>
+      <Field label="Subject"><SubjectSelect value={form.subject} onChange={v=>set('subject',v)}/></Field>
+      <Field label="Exam name"><input style={{width:'100%'}} value={form.name} onChange={e=>set('name',e.target.value)}/></Field>
+      <div style={{display:'flex', gap:10}}>
+        <Field label="Date"><input type="date" value={form.date} onChange={e=>set('date',e.target.value)}/></Field>
+        <Field label="Target grade %"><input type="number" value={form.targetGrade} onChange={e=>set('targetGrade',e.target.value)}/></Field>
+      </div>
+      <Field label="Difficulty"><select value={form.difficulty} onChange={e=>set('difficulty',e.target.value)}><option>Easy</option><option>Medium</option><option>Hard</option></select></Field>
+      <Field label="Topics (comma separated)"><textarea style={{width:'100%'}} rows={2} value={form.topics} onChange={e=>set('topics',e.target.value)}/></Field>
+    </>}
+    {type==='study' && <>
+      <Field label="Subject"><SubjectSelect value={form.subject} onChange={v=>set('subject',v)}/></Field>
+      <Field label="Topic"><input style={{width:'100%'}} value={form.topic} onChange={e=>set('topic',e.target.value)}/></Field>
+      <div style={{display:'flex', gap:10}}>
+        <Field label="Date"><input type="date" value={form.date} onChange={e=>set('date',e.target.value)}/></Field>
+        <Field label="Duration (min)"><input type="number" value={form.durationMinutes} onChange={e=>set('durationMinutes',e.target.value)}/></Field>
+      </div>
+      <Field label="Method"><select value={form.method} onChange={e=>set('method',e.target.value)}>{['Revision','Practice questions','Flashcards','Past paper','Reading','Video','Homework'].map(m=><option key={m}>{m}</option>)}</select></Field>
+      <Field label="Notes"><textarea style={{width:'100%'}} rows={2} value={form.notes} onChange={e=>set('notes',e.target.value)}/></Field>
+    </>}
+    {type==='grade' && <>
+      <Field label="Subject"><SubjectSelect value={form.subject} onChange={v=>set('subject',v)}/></Field>
+      <Field label="Assessment name"><input style={{width:'100%'}} value={form.assessment} onChange={e=>set('assessment',e.target.value)}/></Field>
+      <div style={{display:'flex', gap:10}}>
+        <Field label="Grade"><input type="number" value={form.grade} onChange={e=>set('grade',e.target.value)}/></Field>
+        <Field label="Max grade"><input type="number" value={form.maxGrade} onChange={e=>set('maxGrade',e.target.value)}/></Field>
+        <Field label="Weight"><input type="number" value={form.weight} onChange={e=>set('weight',e.target.value)}/></Field>
+      </div>
+      <div style={{display:'flex', gap:10}}>
+        <Field label="Date"><input type="date" value={form.date} onChange={e=>set('date',e.target.value)}/></Field>
+        <Field label="Term"><input value={form.term} onChange={e=>set('term',e.target.value)}/></Field>
+      </div>
+    </>}
+    {type==='goal' && <Field label="Goal"><input style={{width:'100%'}} value={form.text} onChange={e=>set('text',e.target.value)}/></Field>}
+    {type==='ielts' && <>
+      <Field label="Skill"><select value={form.skill} onChange={e=>set('skill',e.target.value)}>{['Reading','Listening','Writing','Speaking','Vocabulary','Grammar','Mock test'].map(m=><option key={m}>{m}</option>)}</select></Field>
+      <div style={{display:'flex', gap:10}}>
+        <Field label="Date"><input type="date" value={form.date} onChange={e=>set('date',e.target.value)}/></Field>
+        <Field label="Duration (min)"><input type="number" value={form.durationMinutes} onChange={e=>set('durationMinutes',e.target.value)}/></Field>
+      </div>
+      <Field label="Notes"><textarea style={{width:'100%'}} rows={2} value={form.notes} onChange={e=>set('notes',e.target.value)}/></Field>
+    </>}
+    {type==='country' && <>
+      <Field label="Country"><select value={form.name} onChange={e=>set('name',e.target.value)}>{COUNTRY_LIB.map(c=><option key={c.name} value={c.name}>{c.flag} {c.name}</option>)}</select></Field>
+      <Field label="Approx. tuition"><input style={{width:'100%'}} value={form.tuition} onChange={e=>set('tuition',e.target.value)}/></Field>
+      <div style={{display:'flex', gap:10}}>
+        <Field label="Program length"><input value={form.length} onChange={e=>set('length',e.target.value)}/></Field>
+        <Field label="Language"><input value={form.language} onChange={e=>set('language',e.target.value)}/></Field>
+      </div>
+      <Field label="Personal score (1–10)"><input type="number" min="1" max="10" value={form.score} onChange={e=>set('score',e.target.value)}/></Field>
+    </>}
+    {type==='university' && <>
+      <Field label="University name"><input style={{width:'100%'}} value={form.name} onChange={e=>set('name',e.target.value)}/></Field>
+      <div style={{display:'flex', gap:10}}>
+        <Field label="Country"><input value={form.country} onChange={e=>set('country',e.target.value)}/></Field>
+        <Field label="Location"><input value={form.location} onChange={e=>set('location',e.target.value)}/></Field>
+      </div>
+      <div style={{display:'flex', gap:10}}>
+        <Field label="Application deadline"><input type="date" value={form.deadline} onChange={e=>set('deadline',e.target.value)}/></Field>
+        <Field label="Official website"><input value={form.website} onChange={e=>set('website',e.target.value)}/></Field>
+      </div>
+    </>}
+    {type==='event' && <>
+      <Field label="Event name"><input style={{width:'100%'}} value={form.name} onChange={e=>set('name',e.target.value)}/></Field>
+      <Field label="Date"><input type="date" value={form.date} onChange={e=>set('date',e.target.value)}/></Field>
+    </>}
+    <div style={{display:'flex', justifyContent:'flex-end', gap:8, marginTop:16}}>
+      <button className="btn-ghost" onClick={onClose}>Cancel</button>
+      <button className="btn-primary" onClick={save}>Save</button>
+    </div>
+  </Modal>;
+}
+function defaultForm(type){
+  const base = {subject:'biology', date:todayISO(), dueDate:todayISO(), assignedDate:todayISO(), priority:'medium', estMinutes:30, durationMinutes:30, method:'Revision', maxGrade:100, weight:1, term:'Term 1', difficulty:'Medium', targetGrade:95, skill:'Reading', name:'', score:5};
+  return base;
+}
+function SubjectSelect({value, onChange}){
+  return <select value={value} onChange={e=>onChange(e.target.value)}>{SUBJECTS.map(s=><option key={s.key} value={s.key}>{s.emoji} {s.label}</option>)}</select>;
+}
+function PrioritySelect({value, onChange}){
+  return <select value={value} onChange={e=>onChange(e.target.value)}>{Object.entries(PRIORITIES).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</select>;
+}
+
+/* ---------------- AI Assistant (SENIOR) ---------------- */
+function buildContext(data){
+  const today = todayISO();
+  const dueHomework = data.homework.filter(h=>h.status!=='completed').map(h=>`${h.name} (${h.subject}, due ${h.dueDate}, priority ${h.priority}, status ${h.status})`).join('; ') || 'none';
+  const exams = data.exams.map(e=>`${e.name} (${e.subject}, ${e.date}, prep ${e.prepPercent||0}%)`).join('; ') || 'none';
+  const avg = weightedAverage(data.grades);
+  const weekMins = data.study.filter(s=>s.date>=startOfWeek(today)).reduce((a,s)=>a+Number(s.durationMinutes||0),0);
+  const ielts = data.ielts;
+  return `Today's date: ${today}.
+Student: ${data.settings.name}, Senior Year (Grade 12), main subjects Biology, Chemistry, Physics, Mathematics.
+Open homework: ${dueHomework}.
+Exams: ${exams}.
+Current weighted average grade: ${avg!=null?avg.toFixed(1)+'%':'not enough data'}.
+Study time this week: ${weekMins} minutes.
+IELTS current estimate: L${ielts.current.listening} R${ielts.current.reading} W${ielts.current.writing} S${ielts.current.speaking}, target ${ielts.target}, exam date ${ielts.examDate||'not set'}.
+Medicine plan: country ${data.medicine.decidedCountry?data.medicine.decidedCountry.name:'undecided'}, university ${data.medicine.decidedUniversity?data.medicine.decidedUniversity.name:'undecided'}. Countries researched: ${data.medicine.countries.map(c=>c.name).join(', ')||'none'}. Universities researched: ${data.medicine.universities.map(u=>u.name).join(', ')||'none'}.`;
+}
+function AiPanel({data, onClose}){
+  const [messages, setMessages] = useState([{role:'assistant', text:"Hi, I'm SENIOR. Ask me what to focus on today, whether you're falling behind, or how your countries compare — I'll work from your planner data. For official university facts (tuition, deadlines, requirements) always double-check the university's own website."}]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const boxRef = useRef(null);
+  useEffect(()=>{ if(boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight; },[messages, loading]);
+
+  const send = async () => {
+    if(!input.trim() || loading) return;
+    const q = input.trim();
+    setInput('');
+    setMessages(m=>[...m, {role:'user', text:q}]);
+    setLoading(true);
+    try{
+      const sys = `You are SENIOR, a calm, direct planning assistant embedded in a student's Senior Year dashboard called SENIOR OS. Use the planner data below to answer specifically and briefly (short paragraphs or a tight list, no fluff). Never invent specific university admission requirements, deadlines, tuition figures, or licensing rules — if asked about those, give general guidance and say to verify on the official university/country source. Planner data:\n${buildContext(data)}`;
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({model:'claude-sonnet-4-6', max_tokens:600, system: sys, messages:[{role:'user', content:q}]})
+      });
+      const json = await res.json();
+      const textBlocks = (json.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+      setMessages(m=>[...m, {role:'assistant', text: textBlocks || "I couldn't generate a response — try again."}]);
+    }catch(e){
+      setMessages(m=>[...m, {role:'assistant', text:"I couldn't reach the assistant service just now."}]);
+    }
+    setLoading(false);
+  };
+
+  return <div className="modal-overlay" onClick={onClose}>
+    <div className="card-hi fade-in" style={{width:480, maxWidth:'92vw', height:560, display:'flex', flexDirection:'column', padding:0}} onClick={e=>e.stopPropagation()}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'16px 18px', borderBottom:'1px solid var(--border)'}}>
+        <div style={{fontWeight:600, fontSize:14}}>✦ SENIOR</div>
+        <button onClick={onClose} className="btn-ghost" style={{padding:'4px 10px'}}>✕</button>
+      </div>
+      <div ref={boxRef} className="scrollbar-thin" style={{flex:1, overflowY:'auto', padding:16, display:'flex', flexDirection:'column', gap:12}}>
+        {messages.map((m,i)=>(
+          <div key={i} style={{alignSelf: m.role==='user'?'flex-end':'flex-start', maxWidth:'85%', background: m.role==='user'?'var(--blue-dim)':'var(--bg-elev)', color: m.role==='user'?'#DCE7FF':'var(--text)', padding:'9px 12px', borderRadius:11, fontSize:13, lineHeight:1.5, whiteSpace:'pre-wrap'}}>{m.text}</div>
+        ))}
+        {loading && <div style={{alignSelf:'flex-start', color:'var(--text-faint)', fontSize:12.5}}>SENIOR is thinking…</div>}
+      </div>
+      <div style={{display:'flex', gap:8, padding:14, borderTop:'1px solid var(--border)'}}>
+        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') send();}} placeholder="What should I do today?" style={{flex:1}}/>
+        <button className="btn-primary" onClick={send} disabled={loading}>Ask</button>
+      </div>
+    </div>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

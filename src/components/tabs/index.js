@@ -1,0 +1,11 @@
+export { Dashboard } from './Dashboard';
+export { Homework } from './Homework';
+export { CalendarPage } from './CalendarPage';
+export { Exams } from './Exams';
+export { Study } from './Study';
+export { Grades } from './Grades';
+export { Goals } from './Goals';
+export { Ielts } from './Ielts';
+export { Medicine } from './Medicine';
+export { Timeline } from './Timeline';
+export { Settings } from './Settings';
