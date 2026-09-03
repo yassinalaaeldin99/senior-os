@@ -20,7 +20,27 @@ export function Layout({
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [canInstall, setCanInstall] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const searchInputRef = useRef(null);
+
+  // Track window scroll for progress bar & scroll-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = totalHeight > 0 ? Math.min(100, Math.round((scrollY / totalHeight) * 100)) : 0;
+      setScrollProgress(pct);
+      setShowScrollTop(scrollY > 220);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Listen for PWA install prompt
   useEffect(() => {
@@ -265,7 +285,7 @@ export function Layout({
   );
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
       {/* Desktop Sidebar Rail */}
       <aside
         style={{
@@ -582,6 +602,22 @@ export function Layout({
               <span className="desktop-sidebar">Ask SENIOR</span>
             </button>
           </div>
+
+          {/* Real-time Scroll Progress Indicator */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              height: 2,
+              width: `${scrollProgress}%`,
+              background: 'linear-gradient(90deg, var(--blue), var(--violet), var(--cyan))',
+              boxShadow: scrollProgress > 0 ? '0 0 10px rgba(59,130,246,0.7)' : 'none',
+              transition: 'width 0.1s cubic-bezier(0.16, 1, 0.3, 1)',
+              pointerEvents: 'none',
+              zIndex: 30,
+            }}
+          />
         </header>
 
         {/* Content Body */}
@@ -840,6 +876,18 @@ export function Layout({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Floating Scroll To Top Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="scroll-to-top-btn fade-in"
+          title="Back to top (↑)"
+          aria-label="Scroll back to top"
+        >
+          <span style={{ fontSize: 18, fontWeight: 800 }}>↑</span>
+        </button>
       )}
     </div>
   );
