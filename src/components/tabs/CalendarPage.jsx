@@ -4,7 +4,7 @@ import { subjInfo, UAE_MOE_CALENDAR_2026_2027 } from '../../constants/data';
 import { todayISO, fmtDate, daysBetween } from '../../utils/helpers';
 
 export function CalendarPage({ data }) {
-  const [viewMode, setViewMode] = useState('month'); // 'month' | 'agenda'
+  const [viewMode, setViewMode] = useState('month'); // 'month' | 'week' | 'agenda'
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     return { y: d.getFullYear(), m: d.getMonth() };
@@ -87,6 +87,7 @@ export function CalendarPage({ data }) {
     return list.sort((a, b) => a.date.localeCompare(b.date));
   }, [itemsByDate]);
 
+  // Month grid calculations
   const first = new Date(cursor.y, cursor.m, 1);
   const startOffset = (first.getDay() + 6) % 7; // Monday-first
   const daysInMonth = new Date(cursor.y, cursor.m + 1, 0).getDate();
@@ -97,10 +98,51 @@ export function CalendarPage({ data }) {
   const monthLabel = first.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const selectedItems = itemsByDate[selected] || [];
 
+  // Week calculation based on currently selected date
+  const weekDays = useMemo(() => {
+    const parts = (selected || todayISO()).split('-').map(Number);
+    const selDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    const dayOfWeek = (selDate.getDay() + 6) % 7; // 0 = Mon, 6 = Sun
+    const monday = new Date(selDate);
+    monday.setDate(selDate.getDate() - dayOfWeek);
+
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const iso = `${y}-${m}-${day}`;
+      days.push({
+        iso,
+        dayNum: d.getDate(),
+        dayName: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
+        fullDayName: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][i],
+        isToday: iso === todayISO(),
+        isSelected: iso === selected,
+        items: itemsByDate[iso] || [],
+      });
+    }
+    return days;
+  }, [selected, itemsByDate]);
+
   const jumpToToday = () => {
     const d = new Date();
     setCursor({ y: d.getFullYear(), m: d.getMonth() });
     setSelected(todayISO());
+  };
+
+  const changeWeek = (offsetDays) => {
+    const parts = selected.split('-').map(Number);
+    const d = new Date(parts[0], parts[1] - 1, parts[2]);
+    d.setDate(d.getDate() + offsetDays);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const newIso = `${y}-${m}-${day}`;
+    setSelected(newIso);
+    setCursor({ y: d.getFullYear(), m: d.getMonth() });
   };
 
   return (
@@ -121,13 +163,19 @@ export function CalendarPage({ data }) {
               className={`view-mode-btn ${viewMode === 'month' ? 'active' : ''}`}
               onClick={() => setViewMode('month')}
             >
-              <span>📅</span> Month Grid
+              <span>📅</span> Month
+            </button>
+            <button
+              className={`view-mode-btn ${viewMode === 'week' ? 'active' : ''}`}
+              onClick={() => setViewMode('week')}
+            >
+              <span>📆</span> Week
             </button>
             <button
               className={`view-mode-btn ${viewMode === 'agenda' ? 'active' : ''}`}
               onClick={() => setViewMode('agenda')}
             >
-              <span>📜</span> Agenda View
+              <span>📜</span> Agenda
             </button>
           </div>
         </div>
@@ -136,13 +184,13 @@ export function CalendarPage({ data }) {
       {/* VIEW 1: MONTH GRID */}
       {viewMode === 'month' && (
         <div className="calendar-split">
-          <div className="card" style={{ padding: '18px 16px' }}>
+          <div className="card calendar-card">
             {/* Month Header Navigation */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <button
                   className="btn-ghost"
-                  style={{ padding: '5px 10px', fontSize: 13 }}
+                  style={{ padding: '6px 12px', fontSize: 13 }}
                   onClick={() =>
                     setCursor((c) => {
                       let m = c.m - 1,
@@ -160,14 +208,14 @@ export function CalendarPage({ data }) {
                 </button>
                 <button
                   className="btn-ghost"
-                  style={{ padding: '5px 11px', fontSize: 11.5, fontWeight: 600 }}
+                  style={{ padding: '6px 12px', fontSize: 12, fontWeight: 600 }}
                   onClick={jumpToToday}
                 >
                   Today
                 </button>
                 <button
                   className="btn-ghost"
-                  style={{ padding: '5px 10px', fontSize: 13 }}
+                  style={{ padding: '6px 12px', fontSize: 13 }}
                   onClick={() =>
                     setCursor((c) => {
                       let m = c.m + 1,
@@ -195,7 +243,7 @@ export function CalendarPage({ data }) {
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(7, 1fr)',
-                gap: 4,
+                gap: 2,
                 fontSize: 11,
                 fontWeight: 700,
                 color: 'var(--text-faint)',
@@ -203,8 +251,8 @@ export function CalendarPage({ data }) {
                 textAlign: 'center',
               }}
             >
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
-                <div key={d} style={{ padding: '2px 0' }}>{d}</div>
+              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, ix) => (
+                <div key={ix} style={{ padding: '4px 0' }}>{d}</div>
               ))}
             </div>
 
@@ -224,8 +272,9 @@ export function CalendarPage({ data }) {
                     className={`calendar-cell ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}`}
                   >
                     <div
+                      className="calendar-date-num"
                       style={{
-                        fontSize: 12.5,
+                        fontSize: 13,
                         color: isSelected ? '#fff' : isToday ? 'var(--blue-light)' : 'var(--text)',
                         fontWeight: isToday || isSelected ? 700 : 500,
                         textAlign: 'center',
@@ -261,7 +310,7 @@ export function CalendarPage({ data }) {
                       )}
                     </div>
 
-                    {/* Mobile View: Event Colored Indicator Dots */}
+                    {/* Mobile View: Event Indicator Dots */}
                     <div className="calendar-cell-mobile-dots">
                       {items.slice(0, 3).map((it, idx) => (
                         <div
@@ -272,7 +321,7 @@ export function CalendarPage({ data }) {
                         />
                       ))}
                       {items.length > 3 && (
-                        <span style={{ fontSize: 8, color: 'var(--text-faint)', fontWeight: 700 }}>+</span>
+                        <span style={{ fontSize: 7, color: 'var(--text-faint)', fontWeight: 700 }}>+</span>
                       )}
                     </div>
                   </div>
@@ -295,7 +344,7 @@ export function CalendarPage({ data }) {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span className="cal-dot" style={{ background: '#10B981' }} />
-                <span>UAE MOE Break</span>
+                <span>UAE Break</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span className="cal-dot" style={{ background: '#EF4444' }} />
@@ -307,12 +356,12 @@ export function CalendarPage({ data }) {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span className="cal-dot" style={{ background: '#8B5CF6' }} />
-                <span>Study / Milestone</span>
+                <span>Study / Goal</span>
               </div>
             </div>
           </div>
 
-          {/* Selected Date Details Panel (Stacks seamlessly under calendar on phone) */}
+          {/* Selected Date Details Panel */}
           <div className="card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div>
@@ -332,7 +381,7 @@ export function CalendarPage({ data }) {
 
             {selectedItems.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '32px 10px', color: 'var(--text-faint)' }}>
-                <div style={{ fontSize: 24, marginBottom: 6 }}>✨</div>
+                <div style={{ fontSize: 26, marginBottom: 6 }}>✨</div>
                 <div style={{ fontSize: 13, fontWeight: 500 }}>No events or exams on this date</div>
                 <div style={{ fontSize: 11.5, marginTop: 2, color: 'var(--text-faint)' }}>Great day to get ahead on syllabus review</div>
               </div>
@@ -366,7 +415,179 @@ export function CalendarPage({ data }) {
         </div>
       )}
 
-      {/* VIEW 2: AGENDA VIEW */}
+      {/* VIEW 2: WEEK VIEW (PERFECT FOR PHONE & DESKTOP) */}
+      {viewMode === 'week' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Week Selector Bar */}
+          <div
+            className="card"
+            style={{
+              padding: '14px 16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button onClick={() => changeWeek(-7)} className="btn-ghost" style={{ padding: '6px 12px' }}>
+                ‹ Prev Week
+              </button>
+              <button onClick={jumpToToday} className="btn-ghost" style={{ padding: '6px 12px', fontWeight: 600 }}>
+                Today
+              </button>
+              <button onClick={() => changeWeek(7)} className="btn-ghost" style={{ padding: '6px 12px' }}>
+                Next Week ›
+              </button>
+            </div>
+
+            <div className="display" style={{ fontWeight: 700, fontSize: 15 }}>
+              {fmtDate(weekDays[0].iso)} – {fmtDate(weekDays[6].iso)}
+            </div>
+          </div>
+
+          {/* 7-Day Week Strip */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: 8,
+            }}
+          >
+            {weekDays.map((wd) => (
+              <div
+                key={wd.iso}
+                onClick={() => setSelected(wd.iso)}
+                style={{
+                  padding: '12px 6px',
+                  borderRadius: 12,
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  background: wd.isSelected
+                    ? 'linear-gradient(135deg, var(--blue), #2563EB)'
+                    : wd.isToday
+                    ? 'rgba(59, 130, 246, 0.12)'
+                    : 'var(--card)',
+                  border: wd.isSelected
+                    ? '1px solid var(--blue)'
+                    : wd.isToday
+                    ? '1px solid rgba(59, 130, 246, 0.4)'
+                    : '1px solid var(--border-soft)',
+                  boxShadow: wd.isSelected ? '0 4px 14px rgba(37, 99, 235, 0.35)' : 'none',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: wd.isSelected ? '#E0F2FE' : 'var(--text-faint)',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {wd.dayName}
+                </div>
+                <div
+                  className="display"
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 700,
+                    margin: '3px 0',
+                    color: wd.isSelected ? '#FFFFFF' : wd.isToday ? 'var(--blue-light)' : 'var(--text)',
+                  }}
+                >
+                  {wd.dayNum}
+                </div>
+                <div style={{ display: 'flex', gap: 3, justifyContent: 'center', minHeight: 6, alignItems: 'center' }}>
+                  {wd.items.slice(0, 3).map((it, idx) => (
+                    <div
+                      key={idx}
+                      className="cal-dot"
+                      style={{
+                        background: wd.isSelected ? '#FFFFFF' : it.color || 'var(--blue)',
+                        width: 5,
+                        height: 5,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Selected Week Day Events */}
+          <div className="card" style={{ padding: '20px 22px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 700 }}>
+                  Schedule For
+                </div>
+                <div className="display" style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)', marginTop: 2 }}>
+                  {fmtDate(selected)}
+                </div>
+              </div>
+
+              {selected === todayISO() && (
+                <span className="chip" style={{ background: 'var(--blue-dim)', color: '#93C5FD', fontWeight: 700 }}>
+                  Today
+                </span>
+              )}
+            </div>
+
+            {selectedItems.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '36px 10px', color: 'var(--text-faint)' }}>
+                <div style={{ fontSize: 28, marginBottom: 6 }}>✨</div>
+                <div style={{ fontSize: 14, fontWeight: 500 }}>No deadlines or assessments scheduled</div>
+                <div style={{ fontSize: 12, marginTop: 3, color: 'var(--text-faint)' }}>Perfect day for revision or IELTS preparation</div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {selectedItems.map((it, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '14px 16px',
+                      borderRadius: 12,
+                      background: 'var(--bg-elev)',
+                      borderLeft: `5px solid ${it.color || 'var(--blue)'}`,
+                      border: '1px solid var(--border-soft)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 18 }}>{it.emoji}</span>
+                        <span style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text)' }}>
+                          {it.label}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
+                        {it.sub}
+                      </div>
+                    </div>
+
+                    <span
+                      className="chip"
+                      style={{
+                        background: it.color ? `${it.color}22` : 'var(--bg)',
+                        color: it.color || 'var(--text)',
+                        textTransform: 'capitalize',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {it.type === 'moe' ? 'UAE MOE' : it.type}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* VIEW 3: AGENDA VIEW */}
       {viewMode === 'agenda' && (
         <div className="card" style={{ padding: '18px 16px' }}>
           <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 14 }}>
