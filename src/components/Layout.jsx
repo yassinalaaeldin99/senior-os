@@ -23,23 +23,36 @@ export function Layout({
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const searchInputRef = useRef(null);
+  const scrollContainerRef = useRef(null);
 
-  // Track window scroll for progress bar & scroll-to-top button
+  // Track main workspace scroll for progress bar & scroll-to-top button
   useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
     const handleScroll = () => {
-      const scrollY = window.scrollY || document.documentElement.scrollTop;
-      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollY = el.scrollTop;
+      const totalHeight = el.scrollHeight - el.clientHeight;
       const pct = totalHeight > 0 ? Math.min(100, Math.round((scrollY / totalHeight) * 100)) : 0;
       setScrollProgress(pct);
-      setShowScrollTop(scrollY > 220);
+      setShowScrollTop(scrollY > 180);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => el.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Reset scroll to top when switching tabs
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [currentTab]);
+
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   // Listen for PWA install prompt
@@ -285,7 +298,7 @@ export function Layout({
   );
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', maxHeight: '100vh', background: 'var(--bg)', width: '100%', overflow: 'hidden' }}>
       {/* Desktop Sidebar Rail */}
       <aside
         style={{
@@ -409,8 +422,25 @@ export function Layout({
         </div>
       </aside>
 
-      {/* Main Workspace Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      {/* Main Workspace Scroll Area */}
+      <div
+        ref={scrollContainerRef}
+        id="main-scroll-container"
+        style={{
+          flex: 1,
+          height: '100vh',
+          maxHeight: '100vh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          position: 'relative',
+          WebkitOverflowScrolling: 'touch',
+          scrollBehavior: 'smooth',
+        }}
+        className="scrollbar-thin"
+      >
         {/* Top Sticky Header Bar */}
         <header
           className="top-app-header"
@@ -625,7 +655,7 @@ export function Layout({
           className="main-content"
           style={{
             flex: 1,
-            padding: '24px 32px 100px',
+            padding: '24px 32px 140px',
             maxWidth: 1300,
             width: '100%',
             margin: '0 auto',

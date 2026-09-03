@@ -75,6 +75,7 @@
 
 html {
   scroll-behavior: smooth;
+  height: 100%;
 }
 
 html, body {
@@ -85,9 +86,14 @@ html, body {
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  min-height: 100vh;
-  overscroll-behavior-y: none;
-  overflow-x: hidden;
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* Accessibility Focus Visible */
@@ -863,7 +869,7 @@ button {
 
   /* Compact content container with safe area insets */
   .main-content {
-    padding: 14px 14px calc(76px + var(--safe-bottom)) !important;
+    padding: 14px 14px calc(110px + var(--safe-bottom)) !important;
   }
 
   /* Sticky top bar for mobile */
