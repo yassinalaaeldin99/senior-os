@@ -70,7 +70,7 @@ export function App() {
       </Layout>
 
       {/* Quick add floating button */}
-      <div style={{ position: 'fixed', right: 28, bottom: 28, zIndex: 40 }}>
+      <div className="quick-add-btn-wrap">
         {quickAddOpen && (
           <div
             className="card-hi fade-in"

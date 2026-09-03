@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { STORAGE_KEY_THEME } from '../constants/data';
-import { overallAverage, daysBetween, todayISO } from '../utils/helpers';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { todayISO, daysBetween, overallAverage } from '../utils/helpers';
 
-export default function Layout({
+const STORAGE_KEY_THEME = 'senior_os_theme';
+
+export function Layout({
   children,
   data,
   syncStatus = 'local',
@@ -17,6 +18,7 @@ export default function Layout({
   const [searchQuery, setSearchQuery] = useState('');
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [canInstall, setCanInstall] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const searchInputRef = useRef(null);
 
   // Listen for PWA install prompt
@@ -104,8 +106,8 @@ export default function Layout({
       title: 'Vision & Goals',
       items: [
         { key: 'goals', label: 'Goals', icon: '🎯' },
-        { key: 'ielts', label: 'IELTS Prep', icon: '🇬🇧' },
-        { key: 'medicine', label: 'Medicine Plan', icon: '🩺' },
+        { key: 'ielts', label: 'IELTS Academic', icon: '🇬🇧' },
+        { key: 'medicine', label: 'Medicine Track', icon: '🩺' },
       ],
     },
     {
@@ -114,29 +116,27 @@ export default function Layout({
     },
   ];
 
-  // Quick stats for top bar
+  // Calculate live badges
   const stats = useMemo(() => {
-    if (!data) return { avg: null, pendingHw: 0, nextExam: null };
     const today = todayISO();
+    const pendingHw = data.homework.filter((h) => h.status !== 'completed').length;
+    const upcomingExams = data.exams.filter((e) => daysBetween(today, e.date) >= 0).length;
     const avg = overallAverage(data.grades);
-    const pendingHw = (data.homework || []).filter((h) => h.status !== 'completed').length;
-    const upcomingExams = (data.exams || [])
-      .filter((e) => daysBetween(today, e.date) >= 0)
-      .sort((a, b) => a.date.localeCompare(b.date));
-    const nextExam = upcomingExams.length > 0 ? {
-      name: upcomingExams[0].name,
-      days: daysBetween(today, upcomingExams[0].date),
-    } : null;
 
-    return { avg, pendingHw, nextExam };
+    const nextExam = data.exams
+      .map((e) => ({ ...e, days: daysBetween(today, e.date) }))
+      .filter((e) => e.days >= 0)
+      .sort((a, b) => a.days - b.days)[0];
+
+    return { pendingHw, upcomingExams, avg, nextExam };
   }, [data]);
 
-  // Current tab info
-  const activeTabMeta = useMemo(() => {
-    for (const section of NAV_SECTIONS) {
-      for (const item of section.items) {
-        if (item.key === currentTab) {
-          return { section: section.title, ...item };
+  // Find active item metadata for breadcrumbs
+  const activeMeta = useMemo(() => {
+    for (const sec of NAV_SECTIONS) {
+      for (const it of sec.items) {
+        if (it.key === currentTab) {
+          return { section: sec.title, label: it.label, icon: it.icon };
         }
       }
     }
@@ -173,9 +173,98 @@ export default function Layout({
     );
   }, [searchQuery]);
 
+  // Shared navigation items renderer
+  const renderNavSectionItems = (onSelect) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      {NAV_SECTIONS.map((section) => (
+        <div key={section.title}>
+          <div
+            style={{
+              fontSize: 10.5,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              color: 'var(--text-faint)',
+              letterSpacing: '0.8px',
+              padding: '0 10px 6px',
+            }}
+          >
+            {section.title}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {section.items.map((item) => {
+              const isActive = currentTab === item.key;
+              let badge = null;
+              if (item.badgeKey === 'hw' && stats.pendingHw > 0) {
+                badge = (
+                  <span
+                    style={{
+                      fontSize: 10.5,
+                      background: 'var(--amber-dim)',
+                      color: 'var(--amber-light)',
+                      padding: '2px 7px',
+                      borderRadius: 10,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {stats.pendingHw}
+                  </span>
+                );
+              } else if (item.badgeKey === 'exams' && stats.upcomingExams > 0) {
+                badge = (
+                  <span
+                    style={{
+                      fontSize: 10.5,
+                      background: 'var(--red-dim)',
+                      color: 'var(--red-light)',
+                      padding: '2px 7px',
+                      borderRadius: 10,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {stats.upcomingExams}
+                  </span>
+                );
+              } else if (item.badgeKey === 'grades' && stats.avg != null) {
+                badge = (
+                  <span
+                    style={{
+                      fontSize: 10.5,
+                      background: stats.avg >= 95 ? 'var(--green-dim)' : 'var(--blue-dim)',
+                      color: stats.avg >= 95 ? 'var(--green)' : 'var(--blue-light)',
+                      padding: '2px 7px',
+                      borderRadius: 10,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {stats.avg.toFixed(0)}%
+                  </span>
+                );
+              }
+
+              return (
+                <div
+                  key={item.key}
+                  onClick={() => {
+                    setTab(item.key);
+                    if (onSelect) onSelect();
+                  }}
+                  className={`nav-item ${isActive ? 'active' : ''}`}
+                >
+                  <span style={{ fontSize: 16 }}>{item.icon}</span>
+                  <span style={{ flex: 1, fontSize: 13 }}>{item.label}</span>
+                  {badge}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
-      {/* Sidebar Rail */}
+      {/* Desktop Sidebar Rail */}
       <aside
         style={{
           width: 240,
@@ -190,7 +279,7 @@ export default function Layout({
           zIndex: 30,
           overflowY: 'auto',
         }}
-        className="scrollbar-thin"
+        className="desktop-sidebar scrollbar-thin"
       >
         {/* Brand Header */}
         <div style={{ padding: '22px 18px 18px', borderBottom: '1px solid var(--border-soft)' }}>
@@ -224,272 +313,165 @@ export default function Layout({
         </div>
 
         {/* Navigation Categories */}
-        <div style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', gap: 18 }}>
-          {NAV_SECTIONS.map((section) => (
-            <div key={section.title}>
-              <div
-                style={{
-                  fontSize: 10.5,
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  color: 'var(--text-faint)',
-                  letterSpacing: '0.8px',
-                  padding: '0 10px 6px',
-                }}
-              >
-                {section.title}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {section.items.map((item) => {
-                  const isActive = currentTab === item.key;
-                  let badge = null;
-                  if (item.badgeKey === 'hw' && stats.pendingHw > 0) {
-                    badge = stats.pendingHw;
-                  } else if (item.badgeKey === 'exams' && stats.nextExam) {
-                    badge = `${stats.nextExam.days}d`;
-                  } else if (item.badgeKey === 'grades' && stats.avg != null) {
-                    badge = `${stats.avg.toFixed(0)}%`;
-                  }
-
-                  return (
-                    <div
-                      key={item.key}
-                      className={`nav-item ${isActive ? 'active' : ''}`}
-                      onClick={() => setTab(item.key)}
-                      style={{ justifyContent: 'space-between' }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 15 }}>{item.icon}</span>
-                        <span>{item.label}</span>
-                      </div>
-                      {badge && (
-                        <span
-                          style={{
-                            fontSize: 10.5,
-                            fontWeight: 700,
-                            padding: '2px 7px',
-                            borderRadius: 12,
-                            background: isActive ? 'var(--blue)' : 'var(--bg)',
-                            color: isActive ? '#fff' : 'var(--text-faint)',
-                            border: '1px solid var(--border)',
-                          }}
-                        >
-                          {badge}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+        <div style={{ padding: '16px 12px', flex: 1 }}>
+          {renderNavSectionItems()}
         </div>
 
-        {/* Sidebar Footer / AI Card */}
-        <div style={{ padding: 12, borderTop: '1px solid var(--border-soft)' }}>
-          {/* Ask SENIOR Card */}
+        {/* AI Assistant Quick Pill */}
+        <div style={{ padding: '12px 14px', borderTop: '1px solid var(--border-soft)' }}>
           <div
             onClick={() => setAiOpen(true)}
+            className="card card-interactive"
             style={{
-              padding: '12px 14px',
-              borderRadius: 12,
-              background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(139,92,246,0.12))',
-              border: '1px solid rgba(59,130,246,0.3)',
+              padding: '10px 12px',
+              background: 'linear-gradient(135deg, var(--bg-surface), var(--card-hi))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               cursor: 'pointer',
-              marginBottom: 10,
-              transition: 'all 0.2s ease',
+              border: '1px solid var(--border-bright)',
             }}
-            className="card-interactive"
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--text)' }}>
-                <span style={{ color: 'var(--blue-light)' }}>✦</span> Ask SENIOR AI
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 14, color: 'var(--blue)' }}>✦</span>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600 }}>Ask SENIOR AI</div>
+                <div style={{ fontSize: 10, color: 'var(--text-faint)' }}>Mentor · 2026-2027 Context</div>
               </div>
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: '50%',
-                  background: 'var(--green)',
-                  boxShadow: '0 0 8px var(--green)',
-                }}
-              />
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.3 }}>
-              Mentor · 2026–2027 Context
+            <span className="status-dot green" />
+          </div>
+        </div>
+
+        {/* User Footer Profile & Theme Toggle */}
+        <div
+          style={{
+            padding: '12px 14px',
+            borderTop: '1px solid var(--border-soft)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: 12.5,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: '50%',
+                background: 'var(--blue-dim)',
+                color: 'var(--blue-light)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 700,
+                fontSize: 11,
+              }}
+            >
+              {(data.settings?.name || 'Y')[0]}
             </div>
+            <span style={{ fontWeight: 600, color: 'var(--text-dim)' }}>
+              {data.settings?.name || 'Yassin'}
+            </span>
           </div>
 
-          {/* Theme Switcher & User Profile Pill */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 6px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <div
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: '50%',
-                  background: 'var(--card-hi)',
-                  border: '1px solid var(--border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                  fontWeight: 600,
-                }}
-              >
-                Y
-              </div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>
-                {data?.settings?.name || 'Yassin'}
-              </div>
-            </div>
-            <button
-              onClick={toggleTheme}
-              className="btn-ghost"
-              style={{ padding: '4px 8px', fontSize: 11 }}
-              title="Toggle Theme"
-            >
-              {isDark ? '🌙' : '☀️'}
-            </button>
-          </div>
+          <button
+            onClick={toggleTheme}
+            className="btn-ghost"
+            style={{ padding: '5px 9px', fontSize: 13 }}
+            title="Toggle Light / Dark Mode"
+          >
+            {isDark ? '🌙' : '☀️'}
+          </button>
         </div>
       </aside>
 
-      {/* Main App Container with Top Header Bar */}
+      {/* Main Workspace Area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        {/* Top Hybrid Header Bar */}
+        {/* Top Sticky Header Bar */}
         <header
+          className="top-app-header"
           style={{
             position: 'sticky',
             top: 0,
             zIndex: 20,
             background: 'var(--glass)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             borderBottom: '1px solid var(--border-soft)',
-            padding: '12px 32px',
+            padding: '12px 24px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 16,
+            gap: 12,
           }}
         >
-          {/* Breadcrumb / Current Tab info */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 18 }}>{activeTabMeta.icon}</span>
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--text-faint)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-                SENIOR OS · {activeTabMeta.section}
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
-                {activeTabMeta.label}
+          {/* Left: Mobile hamburger & Breadcrumbs */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            {/* Mobile Hamburger Button */}
+            <button
+              onClick={() => setMobileDrawerOpen(true)}
+              className="mobile-only btn-ghost"
+              style={{ padding: '6px 10px', fontSize: 16, minWidth: 36, minHeight: 36 }}
+              aria-label="Open Navigation Menu"
+            >
+              ☰
+            </button>
+
+            {/* Breadcrumb Title */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <span style={{ fontSize: 17 }}>{activeMeta.icon}</span>
+              <div style={{ lineHeight: 1.2 }}>
+                <div
+                  className="desktop-sidebar"
+                  style={{ fontSize: 10.5, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px' }}
+                >
+                  SENIOR OS · {activeMeta.section}
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>
+                  {activeMeta.label}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Center Search / Command Launcher Pill */}
+          {/* Center: Command Palette Trigger (Desktop only) */}
           <div
             onClick={() => setCommandOpen(true)}
+            className="desktop-sidebar card-interactive"
             style={{
+              padding: '6px 14px',
+              borderRadius: 20,
+              background: 'var(--bg-elev)',
+              border: '1px solid var(--border)',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              padding: '6px 14px',
-              background: 'var(--bg-elev)',
-              border: '1px solid var(--border)',
-              borderRadius: 20,
-              cursor: 'pointer',
-              color: 'var(--text-dim)',
               fontSize: 12,
-              minWidth: 220,
-              justifyContent: 'space-between',
+              color: 'var(--text-faint)',
+              minWidth: 200,
+              maxWidth: 320,
             }}
-            className="card-interactive"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>🔍</span>
-              <span>Search or jump to...</span>
-            </div>
-            <span
+            <span>🔍</span>
+            <span style={{ flex: 1 }}>Search or jump to...</span>
+            <kbd
               style={{
-                fontSize: 10,
-                fontWeight: 700,
-                background: 'var(--card-hi)',
+                background: 'var(--card)',
                 padding: '2px 6px',
-                borderRadius: 6,
-                border: '1px solid var(--border-soft)',
+                borderRadius: 4,
+                fontSize: 10,
+                border: '1px solid var(--border)',
+                fontWeight: 600,
               }}
             >
               Ctrl K
-            </span>
+            </kbd>
           </div>
 
-          {/* Center Glance Stats */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {stats.avg != null && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '4px 11px',
-                  background: 'var(--bg-elev)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 20,
-                  fontSize: 12,
-                }}
-              >
-                <span style={{ color: 'var(--text-faint)' }}>GPA:</span>
-                <span style={{ fontWeight: 700, color: stats.avg >= 90 ? 'var(--green)' : 'var(--blue)' }}>
-                  {stats.avg.toFixed(1)}%
-                </span>
-              </div>
-            )}
-
-            {stats.pendingHw > 0 && (
-              <div
-                onClick={() => setTab('homework')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '4px 11px',
-                  background: 'var(--amber-dim)',
-                  border: '1px solid rgba(245,158,11,0.3)',
-                  borderRadius: 20,
-                  fontSize: 12,
-                  color: 'var(--amber-light)',
-                  cursor: 'pointer',
-                }}
-              >
-                <span>📚</span>
-                <span style={{ fontWeight: 600 }}>{stats.pendingHw} HW Due</span>
-              </div>
-            )}
-
-            {stats.nextExam && (
-              <div
-                onClick={() => setTab('exams')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '4px 11px',
-                  background: 'var(--red-dim)',
-                  border: '1px solid rgba(239,68,68,0.3)',
-                  borderRadius: 20,
-                  fontSize: 12,
-                  color: 'var(--red-light)',
-                  cursor: 'pointer',
-                }}
-              >
-                <span>📝</span>
-                <span style={{ fontWeight: 600 }}>
-                  {stats.nextExam.name} ({stats.nextExam.days === 0 ? 'Today' : `in ${stats.nextExam.days}d`})
-                </span>
-              </div>
-            )}
-
+          {/* Right: Status Pills & Action Buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {/* Cloud Sync Status Pill */}
             <div
               onClick={() => setTab('settings')}
@@ -497,7 +479,7 @@ export default function Layout({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                padding: '4px 11px',
+                padding: '5px 10px',
                 background:
                   syncStatus === 'synced'
                     ? 'var(--green-dim)'
@@ -508,7 +490,7 @@ export default function Layout({
                   syncStatus === 'synced' ? 'rgba(16,185,129,0.3)' : 'var(--border)'
                 }`,
                 borderRadius: 20,
-                fontSize: 12,
+                fontSize: 11.5,
                 cursor: 'pointer',
                 color:
                   syncStatus === 'synced'
@@ -518,60 +500,61 @@ export default function Layout({
                     : 'var(--text-faint)',
                 fontWeight: 600,
               }}
-              title="Cloud Database status (click to configure in Settings)"
+              title="Cloud Database status"
             >
               <span>{syncStatus === 'synced' ? '☁️' : syncStatus === 'syncing' ? '🔄' : '💾'}</span>
-              <span>{syncStatus === 'synced' ? 'Cloud Synced' : syncStatus === 'syncing' ? 'Syncing…' : 'Local Only'}</span>
+              <span className="desktop-sidebar">{syncStatus === 'synced' ? 'Cloud Synced' : syncStatus === 'syncing' ? 'Syncing…' : 'Local'}</span>
             </div>
-          </div>
 
-          {/* Quick Action Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Install App Button */}
             {canInstall && (
               <button
                 onClick={handleInstallApp}
                 className="btn-ghost"
                 style={{
-                  padding: '7px 12px',
-                  fontSize: 12.5,
+                  padding: '6px 10px',
+                  fontSize: 12,
                   borderColor: 'var(--blue)',
                   color: 'var(--blue-light)',
                   background: 'var(--blue-dim)',
                   fontWeight: 600,
                 }}
-                title="Install SENIOR OS to your desktop or home screen"
+                title="Install SENIOR OS to home screen"
               >
                 <span>📲</span>
-                <span>Install App</span>
+                <span className="desktop-sidebar">Install</span>
               </button>
             )}
 
+            {/* Quick Add Button (Desktop) */}
             <button
               onClick={() => setQuickAddOpen((v) => !v)}
-              className="btn-ghost"
+              className="desktop-sidebar btn-ghost"
               style={{ padding: '7px 13px', fontSize: 12.5 }}
             >
               <span>+</span>
               <span>Quick Add</span>
             </button>
 
+            {/* Ask AI Button */}
             <button
               onClick={() => setAiOpen(true)}
               className="btn-primary"
               style={{
-                padding: '7px 14px',
-                fontSize: 12.5,
+                padding: '6px 12px',
+                fontSize: 12,
                 background: 'linear-gradient(135deg, var(--blue), var(--violet))',
               }}
             >
               <span>✦</span>
-              <span>Ask SENIOR</span>
+              <span className="desktop-sidebar">Ask SENIOR</span>
             </button>
           </div>
         </header>
 
         {/* Content Body */}
         <main
+          className="main-content"
           style={{
             flex: 1,
             padding: '24px 32px 100px',
@@ -583,6 +566,167 @@ export default function Layout({
           {children}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav
+        className="mobile-only"
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: 'var(--glass)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderTop: '1px solid var(--border)',
+          display: 'flex',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+          zIndex: 35,
+          paddingBottom: 'max(6px, var(--safe-bottom))',
+          paddingTop: 6,
+          height: 'calc(58px + var(--safe-bottom))',
+        }}
+      >
+        {[
+          { key: 'dashboard', label: 'Home', icon: '🏠' },
+          { key: 'homework', label: 'Tasks', icon: '📚' },
+          { key: 'grades', label: 'GPA', icon: '📊' },
+          { key: 'calendar', label: 'Calendar', icon: '📅' },
+          { key: 'more', label: 'More', icon: '☰', isMore: true },
+        ].map((tab) => {
+          const isActive = tab.isMore ? mobileDrawerOpen : currentTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => {
+                if (tab.isMore) setMobileDrawerOpen((v) => !v);
+                else {
+                  setTab(tab.key);
+                  setMobileDrawerOpen(false);
+                }
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 3,
+                color: isActive ? 'var(--blue)' : 'var(--text-dim)',
+                padding: '4px 8px',
+                fontSize: 10.5,
+                fontWeight: isActive ? 700 : 500,
+                cursor: 'pointer',
+                flex: 1,
+                minHeight: 44,
+              }}
+            >
+              <span style={{ fontSize: 18 }}>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Mobile Slide-Out Drawer Menu */}
+      {mobileDrawerOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(5, 8, 15, 0.75)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            zIndex: 60,
+            display: 'flex',
+          }}
+          onClick={() => setMobileDrawerOpen(false)}
+        >
+          <div
+            className="slide-in-left scrollbar-thin"
+            style={{
+              width: 280,
+              maxWidth: '84vw',
+              height: '100%',
+              background: 'var(--bg-elev)',
+              borderRight: '1px solid var(--border)',
+              display: 'flex',
+              flexDirection: 'column',
+              overflowY: 'auto',
+              paddingBottom: 'calc(20px + var(--safe-bottom))',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drawer Header */}
+            <div
+              style={{
+                padding: 'calc(16px + var(--safe-top)) 16px 14px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderBottom: '1px solid var(--border-soft)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 8,
+                    background: 'linear-gradient(135deg, var(--blue), var(--violet))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    fontSize: 15,
+                    fontWeight: 700,
+                  }}
+                >
+                  ✦
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 16 }}>
+                    SENIOR<span style={{ color: 'var(--blue)' }}>OS</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>Grade 12 · Class of 2027</div>
+                </div>
+              </div>
+              <button
+                onClick={() => setMobileDrawerOpen(false)}
+                className="btn-ghost"
+                style={{ padding: '6px 10px', fontSize: 14, minWidth: 36, minHeight: 36 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Navigation List */}
+            <div style={{ padding: '16px 12px', flex: 1 }}>
+              {renderNavSectionItems(() => setMobileDrawerOpen(false))}
+            </div>
+
+            {/* Drawer Theme & Profile Footer */}
+            <div
+              style={{
+                padding: '12px 16px',
+                borderTop: '1px solid var(--border-soft)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                👤 {data.settings?.name || 'Yassin'}
+              </div>
+              <button onClick={toggleTheme} className="btn-ghost" style={{ padding: '6px 10px', fontSize: 14 }}>
+                {isDark ? '🌙' : '☀️'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Global Command Palette (Ctrl+K) */}
       {commandOpen && (
@@ -668,3 +812,5 @@ export default function Layout({
     </div>
   );
 }
+
+export default Layout;

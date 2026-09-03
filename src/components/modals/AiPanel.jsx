@@ -187,11 +187,9 @@ export function AiPanel({ data, update, onClose }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="card-hi fade-in"
+        className="card-hi fade-in modal-sheet"
         style={{
           width: 530,
-          maxWidth: '92vw',
-          height: 620,
           display: 'flex',
           flexDirection: 'column',
           padding: 0,

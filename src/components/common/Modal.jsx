@@ -2,11 +2,9 @@ export function Modal({ title, onClose, children, wide }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="card-hi fade-in"
+        className="card-hi fade-in modal-responsive"
         style={{
           width: wide ? 640 : 460,
-          maxWidth: '92vw',
-          maxHeight: '86vh',
           overflowY: 'auto',
           padding: 22,
         }}
@@ -16,7 +14,7 @@ export function Modal({ title, onClose, children, wide }) {
           <div className="display" style={{ fontSize: 19, fontWeight: 600 }}>
             {title}
           </div>
-          <button onClick={onClose} className="btn-ghost" style={{ padding: '4px 10px' }}>
+          <button onClick={onClose} className="btn-ghost" style={{ padding: '6px 12px', fontSize: 13, minWidth: 36, minHeight: 36 }}>
             ✕
           </button>
         </div>

@@ -32,7 +32,9 @@
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 16px 36px -6px rgba(0, 0, 0, 0.65);
-  --glass: rgba(13, 19, 31, 0.85);
+  --glass: rgba(13, 19, 31, 0.88);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 [data-theme="light"] {
@@ -63,11 +65,12 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.08);
-  --glass: rgba(255, 255, 255, 0.85);
+  --glass: rgba(255, 255, 255, 0.88);
 }
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html, body {
@@ -79,6 +82,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  overscroll-behavior-y: none;
 }
 
 /* Accessibility Focus Visible */
@@ -89,8 +93,8 @@ html, body {
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -107,8 +111,8 @@ html, body {
 }
 
 .scrollbar-thin::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
 }
 
 .display {
@@ -165,6 +169,19 @@ html, body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
   }
 }
 
@@ -274,7 +291,7 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
+  padding: 9px 12px;
   border-radius: 10px;
   color: var(--text-dim);
   font-size: 13px;
@@ -283,6 +300,7 @@ button {
   transition: all 0.15s ease;
   user-select: none;
   position: relative;
+  min-height: 40px;
 }
 
 .nav-item:hover {
@@ -320,13 +338,15 @@ button {
   padding: 3px;
   border-radius: 10px;
   gap: 2px;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .view-mode-btn {
   background: transparent;
   border: none;
   color: var(--text-dim);
-  padding: 5px 12px;
+  padding: 6px 12px;
   border-radius: 7px;
   font-size: 12px;
   font-weight: 500;
@@ -335,6 +355,7 @@ button {
   align-items: center;
   gap: 6px;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .view-mode-btn:hover {
@@ -452,30 +473,93 @@ button {
   padding: 16px;
 }
 
-/* Subtle glow indicators */
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
+.modal-responsive {
+  width: 480px;
+  max-width: 94vw;
+  max-height: 86vh;
 }
 
-.status-dot.green {
-  background: var(--green);
-  box-shadow: 0 0 8px var(--green);
+/* Floating quick add button positioning */
+.quick-add-btn-wrap {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  z-index: 40;
 }
 
-.status-dot.blue {
-  background: var(--blue);
-  box-shadow: 0 0 8px var(--blue);
+/* ===================================================
+   MOBILE & TABLET RESPONSIVE RULES (PHONE SUPPORT)
+   =================================================== */
+
+@media (max-width: 768px) {
+  /* Hide desktop sidebar */
+  .desktop-sidebar {
+    display: none !important;
+  }
+
+  /* Compact content container */
+  .main-content {
+    padding: 14px 14px calc(76px + var(--safe-bottom)) !important;
+  }
+
+  /* Sticky top bar for mobile */
+  .top-app-header {
+    padding: calc(10px + var(--safe-top)) 14px 10px !important;
+  }
+
+  /* Quick add floating button on mobile - placed right above bottom navigation */
+  .quick-add-btn-wrap {
+    right: 18px !important;
+    bottom: calc(72px + var(--safe-bottom)) !important;
+  }
+
+  /* Kanban board stacks vertically on phone */
+  .kanban-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .kanban-col {
+    min-height: auto !important;
+  }
+
+  /* Modals become native iOS-style bottom sheets */
+  .modal-overlay {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+
+  .modal-responsive {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 90vh !important;
+    padding-bottom: calc(20px + var(--safe-bottom)) !important;
+  }
+
+  .modal-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 92vh !important;
+    max-height: 92vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding-bottom: var(--safe-bottom) !important;
+  }
+
+  /* Bento grid stacks on phone */
+  .bento-split {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Data tables support touch scroll */
+  .data-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
-.status-dot.amber {
-  background: var(--amber);
-  box-shadow: 0 0 8px var(--amber);
-}
-
-.status-dot.red {
-  background: var(--red);
-  box-shadow: 0 0 8px var(--red);
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none !important;
+  }
 }
