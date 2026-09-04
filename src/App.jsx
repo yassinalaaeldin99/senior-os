@@ -5,6 +5,7 @@ import { Dashboard, Homework, CalendarPage, Exams, Study, Grades, Goals, Ielts, 
 import { QuickModal } from './components/modals/QuickModal';
 import { AiPanel } from './components/modals/AiPanel';
 import { ScannerModal } from './components/modals/ScannerModal';
+import { IeltsMockModal } from './components/modals/IeltsMockModal';
 
 export function App() {
   const [data, setData, ready, syncStatus] = useStore();
@@ -13,6 +14,7 @@ export function App() {
   const [modal, setModal] = useState(null); // {type, editing}
   const [aiOpen, setAiOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [ieltsMockOpen, setIeltsMockOpen] = useState(false);
 
   const update = useCallback(
     (fn) => {
@@ -110,11 +112,12 @@ export function App() {
             {[
               { t: 'scanner', l: '📷 Scan Homework (AI)', i: '📸', highlight: true },
               { t: 'homework', l: 'Homework Assignment', i: '📚' },
-              { t: 'exam', l: 'Upcoming Exam', i: '📝' },
+              { t: 'ielts_mock', l: 'IELTS Mock Exam', i: '📝' },
+              { t: 'exam', l: 'Upcoming Exam', i: '📋' },
               { t: 'study', l: 'Study Session', i: '📖' },
               { t: 'grade', l: 'Grade Entry', i: '📊' },
               { t: 'goal', l: 'Academic Goal', i: '🎯' },
-              { t: 'ielts', l: 'IELTS Practice', i: '🇬🇧' },
+              { t: 'ielts', l: 'IELTS Practice Log', i: '🇬🇧' },
               { t: 'university', l: 'Med University', i: '🩺' },
               { t: 'event', l: 'Key Milestone', i: '🗓️' },
             ].map((o) => (
@@ -130,6 +133,8 @@ export function App() {
                 onClick={() => {
                   if (o.t === 'scanner') {
                     setScannerOpen(true);
+                  } else if (o.t === 'ielts_mock') {
+                    setIeltsMockOpen(true);
                   } else {
                     setModal({ type: o.t });
                   }
@@ -163,6 +168,7 @@ export function App() {
 
       {modal && <QuickModal modal={modal} data={data} update={update} onClose={() => setModal(null)} />}
       {scannerOpen && <ScannerModal data={data} update={update} onClose={() => setScannerOpen(false)} />}
+      {ieltsMockOpen && <IeltsMockModal data={data} update={update} onClose={() => setIeltsMockOpen(false)} />}
       {aiOpen && <AiPanel data={data} update={update} onClose={() => setAiOpen(false)} />}
     </>
   );

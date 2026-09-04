@@ -1,13 +1,20 @@
 import { useState } from 'react';
 import { PageHeader, Bar, Chip, MiniStat, EmptyState } from '../common';
 import { todayISO, daysBetween, fmtDate } from '../../utils/helpers';
+import { IeltsMockModal } from '../modals/IeltsMockModal';
 
 export function Ielts({ data, update, openModal }) {
-  const [viewMode, setViewMode] = useState('overview'); // 'overview' | 'sessions'
+  const [viewMode, setViewMode] = useState('overview'); // 'overview' | 'mocks' | 'sessions'
+  const [mockModalOpen, setMockModalOpen] = useState(false);
+
   const i = data.ielts;
+  const mockTests = i.mockTests || [];
+  const sessions = i.sessions || [];
+
   const avg =
     (i.current.listening + i.current.reading + i.current.writing + i.current.speaking) / 4;
   const daysLeft = i.examDate ? daysBetween(todayISO(), i.examDate) : null;
+  const target = i.target || 7.5;
 
   const setSkill = (skill, val) =>
     update((d) => {
@@ -19,15 +26,22 @@ export function Ielts({ data, update, openModal }) {
       d.ielts.sessions = d.ielts.sessions.filter((x) => x.id !== id);
     });
 
-  const totalHrs = i.sessions.reduce((a, s) => a + Number(s.durationMinutes || 0), 0) / 60;
-  const bestMock = i.mockTests.length
-    ? Math.max(...i.mockTests.map((m) => Number(m.overall)))
+  const removeMock = (id) =>
+    update((d) => {
+      d.ielts.mockTests = (d.ielts.mockTests || []).filter((x) => x.id !== id);
+    });
+
+  const totalHrs = sessions.reduce((a, s) => a + Number(s.durationMinutes || 0), 0) / 60;
+  const bestMock = mockTests.length
+    ? Math.max(...mockTests.map((m) => Number(m.overall || 0)))
     : null;
-  const avgMock = i.mockTests.length
-    ? i.mockTests.reduce((a, m) => a + Number(m.overall), 0) / i.mockTests.length
+  const avgMock = mockTests.length
+    ? mockTests.reduce((a, m) => a + Number(m.overall || 0), 0) / mockTests.length
     : null;
 
-  const sortedSessions = [...i.sessions].sort((a, b) => b.date.localeCompare(a.date));
+  const sortedSessions = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
+  const sortedMocks = [...mockTests].sort((a, b) => b.date.localeCompare(a.date));
+  const latestMock = sortedMocks[0] || null;
 
   return (
     <div className="fade-in">
@@ -37,7 +51,7 @@ export function Ielts({ data, update, openModal }) {
             IELTS Academic Preparation
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--text-dim)', marginTop: 2 }}>
-            Band score tracking, 4-skill breakdown, and mock examination logs
+            Band score tracking, 4-skill breakdown, and full mock examination logs
           </div>
         </div>
 
@@ -47,17 +61,35 @@ export function Ielts({ data, update, openModal }) {
               className={`view-mode-btn ${viewMode === 'overview' ? 'active' : ''}`}
               onClick={() => setViewMode('overview')}
             >
-              <span>🇬🇧</span> Band Overview
+              <span>🇬🇧</span> Overview
+            </button>
+            <button
+              className={`view-mode-btn ${viewMode === 'mocks' ? 'active' : ''}`}
+              onClick={() => setViewMode('mocks')}
+            >
+              <span>📝</span> Mock Exams ({mockTests.length})
             </button>
             <button
               className={`view-mode-btn ${viewMode === 'sessions' ? 'active' : ''}`}
               onClick={() => setViewMode('sessions')}
             >
-              <span>📋</span> All Sessions ({sortedSessions.length})
+              <span>⏱️</span> Practice Log ({sortedSessions.length})
             </button>
           </div>
 
-          <button onClick={() => openModal({ type: 'ielts' })} className="btn-primary">
+          <button
+            onClick={() => setMockModalOpen(true)}
+            className="btn-primary"
+            style={{ background: 'linear-gradient(135deg, var(--blue), var(--violet))' }}
+            title="Record a completed IELTS Mock Exam"
+          >
+            <span>📝</span> + Record Mock
+          </button>
+          <button
+            onClick={() => openModal({ type: 'ielts' })}
+            className="btn-ghost"
+            title="Log general study or skill practice"
+          >
             <span>+</span> Log Practice
           </button>
         </div>
@@ -92,7 +124,7 @@ export function Ielts({ data, update, openModal }) {
             Medical Admission Target
           </div>
           <div className="display" style={{ fontSize: 32, fontWeight: 700, color: 'var(--green)' }}>
-            {i.target || '7.5'}
+            {target.toFixed(1)}
           </div>
         </div>
 
@@ -100,10 +132,10 @@ export function Ielts({ data, update, openModal }) {
 
         <div>
           <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600 }}>
-            Practice Logged
+            Mock Exams Logged
           </div>
           <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)' }}>
-            {totalHrs.toFixed(1)} Hours
+            {mockTests.length} Tests {bestMock != null ? `(Best: ${bestMock.toFixed(1)})` : ''}
           </div>
         </div>
 
@@ -167,14 +199,25 @@ export function Ielts({ data, update, openModal }) {
 
           {/* Quick Mock Summary & Recent Sessions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {/* Mock Test Benchmarks Box */}
             <div className="card" style={{ padding: 20 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>
-                📝 Mock Test Benchmarks
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>
+                  📝 Mock Test Benchmarks
+                </div>
+                <button
+                  onClick={() => setMockModalOpen(true)}
+                  className="btn-ghost"
+                  style={{ fontSize: 11.5, padding: '4px 10px', borderColor: 'var(--blue)', color: 'var(--blue-light)' }}
+                >
+                  + Record Mock
+                </button>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: latestMock ? 14 : 0 }}>
                 <div style={{ background: 'var(--bg-elev)', padding: '10px 12px', borderRadius: 10, textAlign: 'center' }}>
                   <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>Total Mocks</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, marginTop: 2 }}>{i.mockTests.length}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, marginTop: 2 }}>{mockTests.length}</div>
                 </div>
                 <div style={{ background: 'var(--bg-elev)', padding: '10px 12px', borderRadius: 10, textAlign: 'center' }}>
                   <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>Average</div>
@@ -185,8 +228,44 @@ export function Ielts({ data, update, openModal }) {
                   <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--green)', marginTop: 2 }}>{bestMock != null ? bestMock.toFixed(1) : '—'}</div>
                 </div>
               </div>
+
+              {/* Latest Mock Card snippet */}
+              {latestMock && (
+                <div
+                  style={{
+                    padding: '10px 12px',
+                    background: 'var(--bg-elev)',
+                    borderRadius: 10,
+                    border: '1px solid var(--border-soft)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>Latest: {fmtDate(latestMock.date)}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{latestMock.title}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+                      L: {latestMock.listening} · R: {latestMock.reading} · W: {latestMock.writing} · S: {latestMock.speaking}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 800,
+                      color: latestMock.overall >= target ? 'var(--green)' : 'var(--blue-light)',
+                      padding: '4px 10px',
+                      background: 'var(--bg)',
+                      borderRadius: 8,
+                    }}
+                  >
+                    {Number(latestMock.overall).toFixed(1)}
+                  </div>
+                </div>
+              )}
             </div>
 
+            {/* Recent Practice Sessions */}
             <div className="card" style={{ padding: 20, flex: 1 }}>
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>
                 🕒 Recent Practice Sessions
@@ -231,7 +310,159 @@ export function Ielts({ data, update, openModal }) {
         </div>
       )}
 
-      {/* VIEW 2: ALL SESSIONS TABLE */}
+      {/* VIEW 2: DEDICATED MOCK EXAMS VIEW */}
+      {viewMode === 'mocks' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {/* Top Mock Highlights */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+            <div className="card" style={{ padding: '14px 18px', textAlign: 'center' }}>
+              <div style={{ fontSize: 11.5, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600 }}>Total Mocks Taken</div>
+              <div className="display" style={{ fontSize: 26, fontWeight: 800, marginTop: 4 }}>{mockTests.length}</div>
+            </div>
+            <div className="card" style={{ padding: '14px 18px', textAlign: 'center' }}>
+              <div style={{ fontSize: 11.5, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600 }}>Highest Mock Band</div>
+              <div className="display" style={{ fontSize: 26, fontWeight: 800, color: 'var(--green)', marginTop: 4 }}>
+                {bestMock != null ? bestMock.toFixed(1) : '—'}
+              </div>
+            </div>
+            <div className="card" style={{ padding: '14px 18px', textAlign: 'center' }}>
+              <div style={{ fontSize: 11.5, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600 }}>Average Mock Band</div>
+              <div className="display" style={{ fontSize: 26, fontWeight: 800, color: 'var(--blue)', marginTop: 4 }}>
+                {avgMock != null ? avgMock.toFixed(1) : '—'}
+              </div>
+            </div>
+            <div className="card" style={{ padding: '14px 18px', textAlign: 'center' }}>
+              <div style={{ fontSize: 11.5, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600 }}>Pre-Med Target</div>
+              <div className="display" style={{ fontSize: 26, fontWeight: 800, color: '#A78BFA', marginTop: 4 }}>
+                {target.toFixed(1)}+
+              </div>
+            </div>
+          </div>
+
+          {/* List of Mock Exams */}
+          {sortedMocks.length === 0 ? (
+            <div
+              className="card"
+              style={{
+                padding: '48px 24px',
+                textAlign: 'center',
+                background: 'var(--bg-elev)',
+                borderRadius: 16,
+                border: '1px dashed var(--border-bright)',
+              }}
+            >
+              <div style={{ fontSize: 44, marginBottom: 12 }}>📝</div>
+              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
+                No IELTS Mock Exams Logged Yet
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-dim)', maxWidth: 440, margin: '0 auto 20px', lineHeight: 1.5 }}>
+                Record full practice tests from Cambridge IELTS 16–18, British Council, or IDP to track your path toward the 7.5+ Band required for top medical faculties abroad.
+              </div>
+              <button
+                onClick={() => setMockModalOpen(true)}
+                className="btn-primary"
+                style={{ padding: '10px 22px', fontSize: 13.5 }}
+              >
+                📝 + Record First Mock Exam
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {sortedMocks.map((mock) => {
+                const isMet = Number(mock.overall) >= target;
+
+                return (
+                  <div
+                    key={mock.id}
+                    className="card card-interactive"
+                    style={{
+                      padding: '16px 20px',
+                      borderLeft: `5px solid ${isMet ? 'var(--green)' : 'var(--blue)'}`,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 16,
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 220 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                        <div style={{ fontSize: 16, fontWeight: 700 }}>{mock.title}</div>
+                        <span
+                          className="chip"
+                          style={{
+                            background: isMet ? 'var(--green-dim)' : 'var(--blue-dim)',
+                            color: isMet ? 'var(--green-light)' : 'var(--blue-light)',
+                            fontWeight: 600,
+                            fontSize: 11,
+                          }}
+                        >
+                          {isMet ? '🩺 Target Met' : `🎯 ${(target - Number(mock.overall)).toFixed(1)} to 7.5`}
+                        </span>
+                      </div>
+
+                      <div style={{ fontSize: 12, color: 'var(--text-faint)', marginBottom: 8 }}>
+                        📅 Taken on {fmtDate(mock.date)}
+                      </div>
+
+                      {/* 4 Skill Chips */}
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <span className="chip" style={{ background: 'var(--bg-elev)', fontSize: 11.5 }}>
+                          🎧 L: <b>{Number(mock.listening).toFixed(1)}</b>
+                        </span>
+                        <span className="chip" style={{ background: 'var(--bg-elev)', fontSize: 11.5 }}>
+                          📖 R: <b>{Number(mock.reading).toFixed(1)}</b>
+                        </span>
+                        <span className="chip" style={{ background: 'var(--bg-elev)', fontSize: 11.5 }}>
+                          ✍️ W: <b>{Number(mock.writing).toFixed(1)}</b>
+                        </span>
+                        <span className="chip" style={{ background: 'var(--bg-elev)', fontSize: 11.5 }}>
+                          🗣️ S: <b>{Number(mock.speaking).toFixed(1)}</b>
+                        </span>
+                      </div>
+
+                      {mock.notes && (
+                        <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 8, fontStyle: 'italic' }}>
+                          "{mock.notes}"
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Overall Band Badge & Actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 10.5, textTransform: 'uppercase', color: 'var(--text-faint)', fontWeight: 600 }}>Overall</div>
+                        <div
+                          style={{
+                            fontSize: 28,
+                            fontWeight: 800,
+                            color: isMet ? 'var(--green)' : 'var(--blue-light)',
+                            lineHeight: 1,
+                            marginTop: 2,
+                          }}
+                        >
+                          {Number(mock.overall).toFixed(1)}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => removeMock(mock.id)}
+                        className="btn-ghost"
+                        style={{ padding: '6px 10px', fontSize: 12, border: 'none', color: 'var(--red-light)' }}
+                        title="Delete mock record"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* VIEW 3: ALL SESSIONS TABLE */}
       {viewMode === 'sessions' && (
         <div className="card" style={{ padding: 12, overflowX: 'auto' }}>
           <table className="data-table">
@@ -267,6 +498,15 @@ export function Ielts({ data, update, openModal }) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Mock Exam Record Modal */}
+      {mockModalOpen && (
+        <IeltsMockModal
+          data={data}
+          update={update}
+          onClose={() => setMockModalOpen(false)}
+        />
       )}
     </div>
   );

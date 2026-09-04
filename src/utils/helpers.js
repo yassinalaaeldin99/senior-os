@@ -135,3 +135,19 @@ export const pctDone = (homework) => {
   const done = homework.filter((h) => h.status === 'completed').length;
   return Math.round((done / homework.length) * 100) + '%';
 };
+
+/**
+ * Official IELTS Band rounding:
+ * If fraction ends in .25 -> rounds up to .5
+ * If fraction ends in .75 -> rounds up to next whole band
+ * Otherwise rounds to nearest .0 or .5
+ */
+export const calcIeltsOverall = (l, r, w, s) => {
+  const avg = (Number(l) + Number(r) + Number(w) + Number(s)) / 4;
+  const intPart = Math.floor(avg);
+  const frac = avg - intPart;
+  if (frac < 0.25) return intPart;
+  if (frac < 0.75) return intPart + 0.5;
+  return intPart + 1;
+};
+
