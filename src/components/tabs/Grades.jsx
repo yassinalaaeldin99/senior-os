@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { PageHeader, Bar } from '../common';
 import { SUBJECTS, TERMS, emptyTerm } from '../../constants/data';
 import { calcTermGrade, calcAnnualGrade, overallAverage } from '../../utils/helpers';
+import { GpaSimulator } from './GpaSimulator';
 
 const GRADEABLE_SUBJECTS = SUBJECTS.filter((s) => s.key !== 'other');
 
@@ -185,7 +186,7 @@ function SubjectCard({ subj, subjGrades, update }) {
 }
 
 export function Grades({ data, update }) {
-  const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'table' | 'analytics'
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'simulator' | 'table' | 'analytics'
   const overall = overallAverage(data.grades);
 
   // Analytics computation
@@ -199,7 +200,7 @@ export function Grades({ data, update }) {
       <div className="tab-header">
         <div>
           <div className="display" style={{ fontSize: 24, fontWeight: 700 }}>
-            Academic Grades
+            Academic Grades & GPA
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--text-dim)', marginTop: 2 }}>
             3-Term Ministry Formula: T1 (35%) · T2 (30%) · T3 (35%)
@@ -213,7 +214,17 @@ export function Grades({ data, update }) {
               className={`view-mode-btn ${viewMode === 'cards' ? 'active' : ''}`}
               onClick={() => setViewMode('cards')}
             >
-              <span>🗂️</span> Cards View
+              <span>🗂️</span> Cards
+            </button>
+            <button
+              className={`view-mode-btn ${viewMode === 'simulator' ? 'active' : ''}`}
+              onClick={() => setViewMode('simulator')}
+              style={{
+                color: viewMode === 'simulator' ? 'var(--green-light)' : 'inherit',
+                fontWeight: viewMode === 'simulator' ? 700 : 500,
+              }}
+            >
+              <span>🔮</span> "What-If" Simulator
             </button>
             <button
               className={`view-mode-btn ${viewMode === 'table' ? 'active' : ''}`}
@@ -228,54 +239,83 @@ export function Grades({ data, update }) {
               <span>📊</span> Analytics
             </button>
           </div>
+
+          <button
+            onClick={() => setViewMode((v) => (v === 'simulator' ? 'cards' : 'simulator'))}
+            className="btn-primary"
+            style={{
+              background: viewMode === 'simulator' ? 'var(--card-hi)' : 'linear-gradient(135deg, var(--green), #059669)',
+              border: viewMode === 'simulator' ? '1px solid var(--border)' : 'none',
+              fontSize: 13,
+            }}
+          >
+            <span>{viewMode === 'simulator' ? '✕ Exit Simulator' : '🔮 Launch Simulator'}</span>
+          </button>
         </div>
       </div>
 
-      {/* Overall Performance Banner */}
-      <div
-        className="card"
-        style={{
-          padding: '18px 24px',
-          marginBottom: 24,
-          display: 'flex',
-          gap: 24,
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          background: 'linear-gradient(135deg, var(--card), var(--card-hi))',
-          border: '1px solid var(--border-bright)',
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600 }}>
-            Cumulative GPA
+      {/* MODE 0: WHAT-IF SIMULATOR */}
+      {viewMode === 'simulator' && (
+        <GpaSimulator
+          data={data}
+          update={update}
+          onExit={() => setViewMode('cards')}
+        />
+      )}
+
+      {/* Overall Performance Banner (Hidden when simulator is active) */}
+      {viewMode !== 'simulator' && (
+        <div
+          className="card"
+          style={{
+            padding: '18px 24px',
+            marginBottom: 24,
+            display: 'flex',
+            gap: 24,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            background: 'linear-gradient(135deg, var(--card), var(--card-hi))',
+            border: '1px solid var(--border-bright)',
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600 }}>
+              Cumulative GPA
+            </div>
+            <div className="display" style={{ fontSize: 32, fontWeight: 700, color: 'var(--blue)' }}>
+              {overall != null ? `${overall.toFixed(1)}%` : '—'}
+            </div>
           </div>
-          <div className="display" style={{ fontSize: 32, fontWeight: 700, color: 'var(--blue)' }}>
-            {overall != null ? `${overall.toFixed(1)}%` : '—'}
+
+          <div style={{ borderLeft: '1px solid var(--border)', height: 42 }} />
+
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600 }}>
+              Official Weighting Rules
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.5, marginTop: 2 }}>
+              • <b>Term Grade</b> = (School 1 + School 2) / 40 × 50% + Ministry Exam / 100 × 50%
+              <br />
+              • <b>Annual Grade</b> = Term 1 (35%) + Term 2 (30%) + Term 3 (35%)
+            </div>
+          </div>
+
+          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600 }}>
+              Target Status (95%+)
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: overall != null && overall >= 95 ? 'var(--green)' : 'var(--amber)', marginTop: 4 }}>
+              {overall != null ? (overall >= 95 ? '🌟 Exceeding Medical Standard' : '⚡ On Track · Push in Ministry Exams') : 'Enter grades to evaluate'}
+            </div>
+            <div
+              onClick={() => setViewMode('simulator')}
+              style={{ fontSize: 11.5, color: 'var(--green-light)', cursor: 'pointer', marginTop: 4, fontWeight: 600 }}
+            >
+              🔮 Simulate Ministry Scenarios ➔
+            </div>
           </div>
         </div>
-
-        <div style={{ borderLeft: '1px solid var(--border)', height: 42 }} />
-
-        <div>
-          <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600 }}>
-            Official Weighting Rules
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.5, marginTop: 2 }}>
-            • <b>Term Grade</b> = (School 1 + School 2) / 40 × 50% + Ministry Exam / 100 × 50%
-            <br />
-            • <b>Annual Grade</b> = Term 1 (35%) + Term 2 (30%) + Term 3 (35%)
-          </div>
-        </div>
-
-        <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-          <div style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600 }}>
-            Target Status (95%+)
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: overall != null && overall >= 95 ? 'var(--green)' : 'var(--amber)', marginTop: 4 }}>
-            {overall != null ? (overall >= 95 ? '🌟 Exceeding Medical Standard' : '⚡ On Track · Push in Ministry Exams') : 'Enter grades to evaluate'}
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* MODE 1: CARDS VIEW */}
       {viewMode === 'cards' && (
