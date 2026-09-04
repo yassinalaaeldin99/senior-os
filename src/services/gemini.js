@@ -287,47 +287,68 @@ Respond ONLY with valid JSON matching this schema:
   ]
 }`;
 
-  // Use gemini-1.5-flash which has multimodal vision & PDF OCR support
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  let cleanMime = mimeType || 'image/jpeg';
+  if (cleanMime.includes('heic') || cleanMime.includes('heif')) {
+    cleanMime = 'image/jpeg';
+  }
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: 'user',
-          parts: [
+  // Model list: gemini-flash-latest is verified and working on v1beta
+  const models = ['gemini-flash-latest', 'gemini-3.6-flash', 'gemini-2.5-flash'];
+  let lastError = null;
+
+  for (const modelName of models) {
+    try {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
             {
-              inline_data: {
-                mime_type: mimeType || 'image/jpeg',
-                data: base64Data,
-              },
-            },
-            {
-              text: prompt,
+              role: 'user',
+              parts: [
+                {
+                  inline_data: {
+                    mime_type: cleanMime,
+                    data: base64Data,
+                  },
+                },
+                {
+                  text: prompt,
+                },
+              ],
             },
           ],
-        },
-      ],
-      generationConfig: {
-        temperature: 0.1,
-        responseMimeType: 'application/json',
-      },
-    }),
-  });
+          generationConfig: {
+            temperature: 0.1,
+            responseMimeType: 'application/json',
+          },
+        }),
+      });
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error?.message || `Gemini API error (${response.status})`);
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error?.message || `HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      const rawJson = result.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawJson) {
+        throw new Error('No candidate content returned');
+      }
+
+      return JSON.parse(rawJson);
+    } catch (e) {
+      console.warn(`Model ${modelName} failed:`, e.message);
+      lastError = e;
+      // If error is about invalid key or quota, fail fast
+      if (e.message?.includes('API key not valid') || e.message?.includes('RESOURCE_EXHAUSTED')) {
+        throw e;
+      }
+    }
   }
 
-  const result = await response.json();
-  const rawJson = result.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawJson) {
-    throw new Error('No response received from Gemini.');
-  }
-
-  return JSON.parse(rawJson);
+  throw lastError || new Error('Failed to extract homework from document.');
 }
 

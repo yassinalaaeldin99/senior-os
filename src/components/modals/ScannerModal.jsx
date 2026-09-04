@@ -4,6 +4,67 @@ import { scanHomeworkWithGemini, getApiKey, setApiKey } from '../../services/gem
 import { SUBJECTS, subjInfo } from '../../constants/data';
 import { uid, todayISO } from '../../utils/helpers';
 
+function processFile(selectedFile) {
+  return new Promise((resolve, reject) => {
+    if (selectedFile.type === 'application/pdf') {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result;
+        resolve({
+          dataUrl,
+          base64: dataUrl.split(',')[1],
+          mimeType: 'application/pdf',
+        });
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(selectedFile);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 1920;
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+        resolve({
+          dataUrl,
+          base64: dataUrl.split(',')[1],
+          mimeType: 'image/jpeg',
+        });
+      };
+      img.onerror = () => {
+        const dataUrl = e.target.result;
+        resolve({
+          dataUrl,
+          base64: dataUrl.split(',')[1],
+          mimeType: selectedFile.type || 'image/jpeg',
+        });
+      };
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(selectedFile);
+  });
+}
+
 export function ScannerModal({ data, update, onClose, onFinish }) {
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -20,23 +81,19 @@ export function ScannerModal({ data, update, onClose, onFinish }) {
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
-  const handleFileSelect = (selectedFile) => {
+  const handleFileSelect = async (selectedFile) => {
     if (!selectedFile) return;
     setError(null);
     setFile(selectedFile);
-    setMimeType(selectedFile.type || 'image/jpeg');
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result;
+    try {
+      const { dataUrl, base64, mimeType: resolvedMime } = await processFile(selectedFile);
       setPreviewUrl(dataUrl);
-      const base64 = dataUrl.split(',')[1];
       setBase64Data(base64);
-    };
-    reader.onerror = () => {
-      setError('Could not read file. Please try another image or PDF.');
-    };
-    reader.readAsDataURL(selectedFile);
+      setMimeType(resolvedMime);
+    } catch (e) {
+      setError('Could not process this image. Please try another file.');
+    }
   };
 
   const handleScan = async () => {
